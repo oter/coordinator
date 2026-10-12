@@ -19,11 +19,14 @@ The specification is [docs/spec.md](docs/spec.md).
 ## Install
 
 ```bash
+claude plugin marketplace add oter/bruh
 claude plugin install coordinator@oter
 claude plugin install bruh@oter
 ```
 
-The marketplace `oter` is in [oter/bruh](https://github.com/oter/bruh). The coordinator needs the bruh plugin (`bruh@oter`): the clerks run its workflows (`/bruh:deliver`, `/bruh:tickets`, `/bruh:implement-tickets`, `/bruh:review-and-fix`, `/bruh:review-only`) and its skill `/bruh:implement`.
+The marketplace `oter` is in [oter/bruh](https://github.com/oter/bruh). `coordinator@oter` becomes installable when the `oter` marketplace lists it and bruh 0.13.0, which no longer has the roles, is released (steps 4 and 5 of the work plan of the plugin split). Until then, do not install it next to bruh 0.12.x: bruh 0.12.x still has its own copy of the roles, so each hook, the poller, and the board would run twice.
+
+The coordinator needs the bruh plugin (`bruh@oter`): the clerks run its workflows (`/bruh:deliver`, `/bruh:tickets`, `/bruh:implement-tickets`, `/bruh:review-and-fix`, `/bruh:review-only`) and its skill `/bruh:implement`.
 
 Then run `/coordinator:init` in a session with no role key, and start bigm in the ledger folder.
 

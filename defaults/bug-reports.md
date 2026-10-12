@@ -8,7 +8,7 @@ A defect of bruh is a result of the plugin that breaks the specification, the de
 
 ## Steps
 
-1. Read the value `repository` of `<plugin_root>/.claude-plugin/plugin.json`. The report goes to this repository.
+1. Find the repository of the file with the defect. For a file of the coordinator plugin, read the value `repository` of `<plugin_root>/.claude-plugin/plugin.json` (oter/coordinator). For a file of the bruh plugin (the workflows, the implement skill, `house-rules.md`, and `lane.sh`), read the value `repository` of `<bruh_root>/.claude-plugin/plugin.json` (oter/bruh). `<bruh_root>` is the `installPath` of `bruh@oter` in `~/.claude/plugins/installed_plugins.json` (for example `~/.claude/plugins/cache/oter/bruh/0.13.0`). The report goes to this repository. Agent-derived, needs owner decision.
 2. Search its open and closed issues for the same defect: `gh issue list --repo <repository> --state all --search '<words>'`. For a duplicate, tell the owner its link, and stop.
 3. Write the draft with the fields of the bug form of the repository:
    - the title;
