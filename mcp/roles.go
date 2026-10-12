@@ -20,7 +20,7 @@ var scoutTaskRE = regexp.MustCompile(`^scout[0-9]*$`)
 // of the project starts to gather facts (owner rule R-1, spec 3.6.1).
 func isScout(k RoleKey) bool { return k.Role == "clerk" && scoutTaskRE.MatchString(k.Task) }
 
-const bruhTool = "mcp__plugin_bruh_bruh__"
+const bruhTool = "mcp__plugin_coordinator_coordinator__"
 
 // scoutGitWrites are the git subcommands that write a repository (its objects, refs, index,
 // config, or work tree), a remote, or new files. fetch and remote update write the

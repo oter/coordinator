@@ -32,7 +32,7 @@ For a short check before the full hour:
 BRUH_TRUSTED_REPO=<scratch folder>/bruh-smoke-home sh tests/load/run.sh --sessions 2 --minutes 10
 ```
 
-Environment variables: `LOAD_RUN` sets the run ID (1 to 12 lowercase letters and digits), `LOAD_EVIDENCE` sets the evidence folder (default `$TMPDIR/bruh-load-<run>`), and `BRUH_TEST_DATA` sets the plugin data folder (default `~/.claude/plugins/data/bruh-inline`).
+Environment variables: `LOAD_RUN` sets the run ID (1 to 12 lowercase letters and digits), `LOAD_EVIDENCE` sets the evidence folder (default `$TMPDIR/bruh-load-<run>`), and `BRUH_TEST_DATA` sets the plugin data folder (default `~/.claude/plugins/data/coordinator-inline`).
 
 ## What the driver does
 
@@ -42,7 +42,7 @@ Environment variables: `LOAD_RUN` sets the run ID (1 to 12 lowercase letters and
 
    ```bash
    CLAUDE_CODE_FORCE_SESSION_PERSISTENCE=1 claude --bg --name <role key> --permission-mode auto \
-     --settings <data>/roles/<role key>.json --plugin-dir plugins/bruh --model haiku \
+     --settings <data>/roles/<role key>.json --plugin-dir . --model haiku \
      "Read your start message with mail_read."
    ```
 

@@ -1,6 +1,6 @@
 ---
 name: init
-description: Set up bruh for this user in 12 steps. Finds the ledger, asks the mode and the settings, picks the projects under the root, runs the learn step (one read-only learner for each project) and the confirm of each learned value, shows the diff of each file that it will write and writes only after an explicit yes, then runs the trust step. A second run changes the projects or the settings. Use when the user runs /bruh:init.
+description: Set up bruh for this user in 12 steps. Finds the ledger, asks the mode and the settings, picks the projects under the root, runs the learn step (one read-only learner for each project) and the confirm of each learned value, shows the diff of each file that it will write and writes only after an explicit yes, then runs the trust step. A second run changes the projects or the settings. Use when the user runs /coordinator:init.
 disable-model-invocation: true
 ---
 
@@ -19,7 +19,7 @@ You set up bruh for the owner. You ask questions, the learners read the projects
 
 ## Before step 1
 
-Call `bruh_info` (`mcp__plugin_bruh_bruh__bruh_info`). Keep its `data_dir` for step 4. When it returns a `role_key` that is not empty, stop. Tell the owner to run `/bruh:init` again from a session with no role key: `claude --setting-sources user` in the ledger folder, or a session in a folder outside each clone of the ledger. A plain `claude` in the ledger folder is bigm, and `learn_scan` refuses a caller with a role key.
+Call `bruh_info` (`mcp__plugin_coordinator_coordinator__bruh_info`). Keep its `data_dir` for step 4. When it returns a `role_key` that is not empty, stop. Tell the owner to run `/coordinator:init` again from a session with no role key: `claude --setting-sources user` in the ledger folder, or a session in a folder outside each clone of the ledger. A plain `claude` in the ledger folder is bigm, and `learn_scan` refuses a caller with a role key.
 
 ## Steps
 
@@ -67,7 +67,7 @@ Select: `~/workspace` (default), "another path". For "another path", ask the abs
 
 Controls: the code host of each repository, so that the pick can show its activity and bruh knows which API to call.
 
-Call `learn_scan` (`mcp__plugin_bruh_bruh__learn_scan`) with `ledger` and `root` (and `depth` and `exclude` when they are not the defaults).
+Call `learn_scan` (`mcp__plugin_coordinator_coordinator__learn_scan`) with `ledger` and `root` (and `depth` and `exclude` when they are not the defaults).
 
 - For each entry of `hosts_without_kind`: a select of the kind: `github`, `gitlab`, `gitea`, "other: no calls". Put each kind other than "other: no calls" into `host_kinds`.
 - For each entry of `aliases_without_host`: ask the real host as text, or "skip". A typed host must match `[a-z0-9.-]+` (write it in lower case). Put the alias and the typed host into `host_aliases`. When the owner skips, the pick shows the activity as "unknown", and the learner of the project proposes the host (step 9).
@@ -102,7 +102,7 @@ Start from the `projects` of `learn_scan` that have a picked repository, with on
 
 Controls: the proposals of the index: the purpose, the links to other projects, the doc pointers, and the host of each alias with no host.
 
-Start one subagent `bruh:learner` for each project of step 8 with the Agent tool, at most 8 at the same time. This is not a workflow. The prompt of each learner has:
+Start one subagent `coordinator:learner` for each project of step 8 with the Agent tool, at most 8 at the same time. This is not a workflow. The prompt of each learner has:
 
 - the root;
 - the key of the project and the paths of its repositories, relative to the root;
@@ -161,7 +161,7 @@ A `HOST <alias>` value becomes one `host` fill for each repository of the projec
 
 Controls: nothing changes on disk before your yes.
 
-Call `init_plan` (`mcp__plugin_bruh_bruh__init_plan`) with `answers`, one object with: `ledger_path`, `mode`, `p1_batch_minutes`, `p1_batch_size`, `review_round_cap`, `auto_compact_window`, `wrap_statusline`, `channels` (a list), `root`, `depth`, `exclude`, `host_kinds` (each kind that `learn_scan` found plus each kind of the owner), `host_aliases` (each pair of `learn_scan` plus each host that the owner typed), and `projects` (a list of `{"key", "repos", "main", "fills"}`, with the paths relative to the root). Leave out a key to use its default.
+Call `init_plan` (`mcp__plugin_coordinator_coordinator__init_plan`) with `answers`, one object with: `ledger_path`, `mode`, `p1_batch_minutes`, `p1_batch_size`, `review_round_cap`, `auto_compact_window`, `wrap_statusline`, `channels` (a list), `root`, `depth`, `exclude`, `host_kinds` (each kind that `learn_scan` found plus each kind of the owner), `host_aliases` (each pair of `learn_scan` plus each host that the owner typed), and `projects` (a list of `{"key", "repos", "main", "fills"}`, with the paths relative to the root). Leave out a key to use its default.
 
 When `init_plan` returns an error, tell the owner the error, and ask the question of that answer again.
 
@@ -169,7 +169,7 @@ When `init_plan` returns an error, tell the owner the error, and ask the questio
 - Show `ledger_table` as a table with the columns: project key, purpose, repositories, links, docs.
 - Select "apply" (default), "show all", "cancel". "Show all" shows `ledger_diff` in full in one `diff` code block, then asks again. "Cancel" stops, and nothing is written.
 
-Only after "apply", call `init_apply` (`mcp__plugin_bruh_bruh__init_apply`) with the `plan_id` and the `diff_sha256` of the result. Claude Code asks the owner to approve the call. The plan exists only in this session. When `init_apply` says that a file changed after `init_plan`, call `init_plan` again with the same answers, and show the new diff. Tell the owner each path of `applied`, and each path of `kept` (a project file that stays because it has open items).
+Only after "apply", call `init_apply` (`mcp__plugin_coordinator_coordinator__init_apply`) with the `plan_id` and the `diff_sha256` of the result. Claude Code asks the owner to approve the call. The plan exists only in this session. When `init_apply` says that a file changed after `init_plan`, call `init_plan` again with the same answers, and show the new diff. Tell the owner each path of `applied`, and each path of `kept` (a project file that stays because it has open items).
 
 ### 12. Trust
 
@@ -192,7 +192,7 @@ Ask first: "change projects" (default), "change settings". The mode and the P1 s
   - "Add": run steps 6 and 7 with the stored `root`, `depth`, and `exclude`, and show only the repositories that no project has.
   - An added project and a project to learn again go through steps 8 to 10.
   - The answers carry the full new `projects` list, and the stored `root`, `depth`, `exclude`, `host_kinds`, and `host_aliases` with the new pairs. A kept project has its stored `key`, `repos`, and `main`, and no `fills` key: `init_plan` then keeps its stored JSON. A removed project is not in the list.
-- "Change settings": ask the questions of step 4 again. Each select shows the current value first, with the label "(current)". Read the current values in `~/.claude/settings.json` with Read: `autoCompactWindow`; the tap is current when `statusLine.command` runs `statusline-tap.sh`; Slack is current when the allow rules have `mcp__plugin_bruh_slack__post_question`; Telegram is current when `enabledPlugins["telegram@claude-plugins-official"]` is true. Send `ledger_path` and the answers of step 4, and no `projects` key: the index does not change.
+- "Change settings": ask the questions of step 4 again. Each select shows the current value first, with the label "(current)". Read the current values in `~/.claude/settings.json` with Read: `autoCompactWindow`; the tap is current when `statusLine.command` runs `statusline-tap.sh`; Slack is current when the allow rules have `mcp__plugin_coordinator_slack__post_question`; Telegram is current when `enabledPlugins["telegram@claude-plugins-official"]` is true. Send `ledger_path` and the answers of step 4, and no `projects` key: the index does not change.
 
 ## After apply
 
@@ -201,8 +201,8 @@ Show only the notes that match the answers:
 - The `launch_command` of the `init_plan` result, in a code block. It starts bigm.
 - A plain `claude` in the ledger folder also starts bigm, with no `auto` mode, no name `bigm`, and no channel. After a plain start, run `/rename bigm`. When a channel is set up, start bigm only with the `launch_command`.
 - Only with `telegram`: install `telegram@claude-plugins-official`, run `/telegram:configure <token>`, pair your account, and set the policy to `allowlist`.
-- Only with `slack`: run `/plugin configure bruh` and set the Slack bot token, the channel ID, and your Slack user ID. `plugins/bruh/channels/slack/README.md` tells how to make the Slack app.
-- Only when init wrote the tap: before you uninstall the bruh plugin, set `statusLine.command` back to the previous command (the second quoted part of the new value). The uninstall deletes the plugin data folder and the tap in it.
+- Only with `slack`: run `/plugin configure coordinator` and set the Slack bot token, the channel ID, and your Slack user ID. `channels/slack/README.md` tells how to make the Slack app.
+- Only when init wrote the tap: before you uninstall the coordinator plugin, set `statusLine.command` back to the previous command (the second quoted part of the new value). The uninstall deletes the plugin data folder and the tap in it.
 - Only for the host kinds of the selected repositories. bruh sends a token only to its own host.
   - GitHub: log in with `gh auth login`. bruh uses `GITHUB_TOKEN` or `gh auth token` for `api.github.com` and the hosts in `BRUH_GITHUB_HOSTS`.
   - GitLab: log in with `glab auth login --hostname <host>`. bruh calls GitLab only through `glab`.
@@ -224,4 +224,4 @@ go run -C <plugin root>/mcp . init --answers <answers file>
 
 The answers file is one JSON object with the keys of step 11, with the `fills` as they are: no learner runs, and `init_plan` checks the fills with its value rules. A container has no install dialog, so the file can also have the plugin options `user_name`, `handoff_percent`, and `max_busy_clerks`.
 
-A `BRUH_INIT_<KEY>` variable sets one key and has priority over the file, for example `BRUH_INIT_ROOT=/home/me/workspace` or `BRUH_INIT_CHANNELS='["telegram"]'`. The values of `user_name`, `ledger_path`, `mode`, and `root` are text. The other values are JSON. The command prints the diff, writes the files, prints `applied: <path>` for each write and `deleted: <path>` for each deletion, and prints the bigm start command. `BRUH_DATA` sets the plugin data folder (default `~/.claude/plugins/data/bruh-oter`), and `BRUH_SETTINGS_FILE` sets the user settings file (default `~/.claude/settings.json`).
+A `BRUH_INIT_<KEY>` variable sets one key and has priority over the file, for example `BRUH_INIT_ROOT=/home/me/workspace` or `BRUH_INIT_CHANNELS='["telegram"]'`. The values of `user_name`, `ledger_path`, `mode`, and `root` are text. The other values are JSON. The command prints the diff, writes the files, prints `applied: <path>` for each write and `deleted: <path>` for each deletion, and prints the bigm start command. `BRUH_DATA` sets the plugin data folder (default `~/.claude/plugins/data/coordinator-oter`), and `BRUH_SETTINGS_FILE` sets the user settings file (default `~/.claude/settings.json`).

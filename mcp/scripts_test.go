@@ -501,8 +501,8 @@ func TestRefusalHoldStopsTheSession(t *testing.T) {
 			t.Fatalf("reason = %q", r)
 		}
 	}
-	for _, tool := range []string{"mcp__plugin_bruh_bruh__question_open", "mcp__plugin_bruh_bruh__answer_wait", "mcp__plugin_bruh_bruh__mail_post",
-		"mcp__plugin_bruh_bruh__mail_read", "SendMessage", "ToolSearch", "StructuredOutput"} {
+	for _, tool := range []string{"mcp__plugin_coordinator_coordinator__question_open", "mcp__plugin_coordinator_coordinator__answer_wait", "mcp__plugin_coordinator_coordinator__mail_post",
+		"mcp__plugin_coordinator_coordinator__mail_read", "SendMessage", "ToolSearch", "StructuredOutput"} {
 		if out := refusal(t, data, preTool("S", tool, "", ""), refusalKey); out != "" {
 			t.Fatalf("%s denied: %q", tool, out)
 		}
@@ -513,7 +513,7 @@ func TestRefusalHoldStopsTheSession(t *testing.T) {
 	// answer_write: the held clerk may not call it, also for the linked P0; bigm has no deny-all
 	// hold, so its answer_write goes through.
 	answerWrite := func(qid any) map[string]any {
-		in := preTool("S", "mcp__plugin_bruh_bruh__answer_write", "", "")
+		in := preTool("S", "mcp__plugin_coordinator_coordinator__answer_write", "", "")
 		in["tool_input"] = map[string]any{"question_id": qid, "text": "t"}
 		return in
 	}
@@ -736,13 +736,13 @@ func TestRefusalHoldScoutTellsParent(t *testing.T) {
 		t.Fatalf("holds = %v", holds)
 	}
 	id := holds[0]["id"].(string)
-	reportWrite := preTool("S", "mcp__plugin_bruh_bruh__report_write", "", "")
+	reportWrite := preTool("S", "mcp__plugin_coordinator_coordinator__report_write", "", "")
 	for _, in := range []map[string]any{preTool("S", "Bash", "ls", ""), reportWrite} {
 		if r := denyReason(t, refusal(t, data, in, scoutKey)); !strings.Contains(r, id) || !strings.Contains(r, "mail_post") || !strings.Contains(r, "DONE: scout") {
 			t.Fatalf("%s reason = %q", in["tool_name"], r)
 		}
 	}
-	if out := refusal(t, data, preTool("S", "mcp__plugin_bruh_bruh__mail_post", "", ""), scoutKey); out != "" {
+	if out := refusal(t, data, preTool("S", "mcp__plugin_coordinator_coordinator__mail_post", "", ""), scoutKey); out != "" {
 		t.Fatalf("mail_post of the held scout denied: %q", out)
 	}
 	env := testEnv(t, "clerk-a-scout3")
@@ -774,7 +774,7 @@ func TestRefusalHoldSparesBigm(t *testing.T) {
 		t.Fatalf("holds = %v", holds)
 	}
 	id := holds[0]["id"].(string)
-	answerWrite := preTool("S", "mcp__plugin_bruh_bruh__answer_write", "", "")
+	answerWrite := preTool("S", "mcp__plugin_coordinator_coordinator__answer_write", "", "")
 	answerWrite["tool_input"] = map[string]any{"question_id": "Q-x-1", "text": "t"}
 	// Same command string in another field shape: not the exact call, so allowed.
 	reshaped := preTool("S", "Bash", "", "")
@@ -878,18 +878,17 @@ func TestGitChain(t *testing.T) {
 		`find . -name '*.go' -not -path '*/.git/*' | wc -l`,
 		// Each run line of .github/workflows/ci.yml except the shellcheck line (denied above),
 		// the go lines in the cd form of their working-directory, plus the shellcheck gate.
-		`cd plugins/bruh/mcp && test -z "$(gofmt -l .)"`,
-		"cd plugins/bruh/mcp && go vet ./...",
-		"cd plugins/bruh/mcp && go test -race ./...",
-		`cd plugins/bruh/channels/slack && test -z "$(gofmt -l .)"`,
-		"cd plugins/bruh/channels/slack && go vet ./...",
-		"cd plugins/bruh/channels/slack && go test -race ./...",
+		`cd mcp && test -z "$(gofmt -l .)"`,
+		"cd mcp && go vet ./...",
+		"cd mcp && go test -race ./...",
+		`cd channels/slack && test -z "$(gofmt -l .)"`,
+		"cd channels/slack && go vet ./...",
+		"cd channels/slack && go test -race ./...",
 		"sh tests/test.sh",
 		"npm ci --prefix .github/tools/claude-code",
-		".github/tools/claude-code/node_modules/.bin/claude plugin validate ./plugins/bruh",
 		".github/tools/claude-code/node_modules/.bin/claude plugin validate .",
-		"node --test plugins/bruh/agents/agents_test.mjs plugins/bruh/workflows/deliver.test.mjs plugins/bruh/workflows/implement.test.mjs",
-		"shellcheck plugins/bruh/scripts/git-chain.sh",
+		"node --test agents/agents_test.mjs",
+		"shellcheck scripts/git-chain.sh",
 	} {
 		if out := gitChain(t, c, clerk); out != "" {
 			t.Errorf("%q denied: %q", c, out)

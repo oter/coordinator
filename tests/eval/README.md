@@ -4,7 +4,7 @@ This folder has two evals: the learner eval, and the routing eval (see "Routing 
 
 ## Learner eval
 
-The learner eval checks the `bruh:learner` agent against fixed fixtures (spec section 20). The rule of the owner says that meaning needs a model with its own eval set. This folder is that eval set.
+The learner eval checks the `coordinator:learner` agent against fixed fixtures (spec section 20). The rule of the owner says that meaning needs a model with its own eval set. This folder is that eval set.
 
 ### What the eval checks
 
@@ -16,23 +16,23 @@ Each case of `learner/` has fixture repositories and the expected output of the 
 
 The driver compares whole lines. It ignores all other lines of the output.
 
-The eval does not check the `PURPOSE` line. The owner checks the purpose at the confirm step of `/bruh:init`.
+The eval does not check the `PURPOSE` line. The owner checks the purpose at the confirm step of `/coordinator:init`.
 
 ### Run
 
-Run the driver from the root of the bruh checkout:
+Run the driver from the root of the coordinator checkout:
 
 ```bash
 sh tests/eval/run.sh
 ```
 
-The driver starts a real Claude Code session for each case, so it uses your Claude account and your usage limits. It loads the learner from `plugins/bruh` of the checkout with `--plugin-dir`. Thus the eval tests the code of the branch, and not the installed plugin.
+The driver starts a real Claude Code session for each case, so it uses your Claude account and your usage limits. It loads the learner from the root of the checkout with `--plugin-dir`. Thus the eval tests the code of the branch, and not the installed plugin.
 
 For each case, the driver does these steps:
 
 1. It copies `root/` of the case to a new temporary folder.
 2. It replaces `<root>` in `input.txt` with that folder.
-3. It runs `claude -p --agent bruh:learner` with that input in that folder.
+3. It runs `claude -p --agent coordinator:learner` with that input in that folder.
 4. It compares the output with `expected.txt`, and prints `PASS <case>` or `FAIL <case>` with the difference.
 
 At the end, it prints the summary line `learner eval: <passed> of <cases>`. It exits with 1 when a case failed. An error of `claude` or a timeout is a failure of that case.
@@ -63,7 +63,7 @@ The eval does not run in CI, because it starts a model session. CI runs only `te
 
 ## Routing eval
 
-The routing eval checks the `bruh:bigm` agent against fixed work requests (spec sections 3.4, 14.2, and 20). bigm must route each request to a lane itself, and tell the owner its commitment in one line. It must not ask the owner which agent, clanker, or clerk does the work.
+The routing eval checks the `coordinator:bigm` agent against fixed work requests (spec sections 3.4, 14.2, and 20). bigm must route each request to a lane itself, and tell the owner its commitment in one line. It must not ask the owner which agent, clanker, or clerk does the work.
 
 ### What the routing eval checks
 
@@ -78,7 +78,7 @@ The driver compares exact values only. It does not judge the meaning of the text
 
 ### Run the routing eval
 
-Run the driver from the root of the bruh checkout:
+Run the driver from the root of the coordinator checkout:
 
 ```bash
 sh tests/eval/run.sh routing
@@ -86,13 +86,13 @@ sh tests/eval/run.sh routing
 
 For each case, the driver does these steps:
 
-1. It copies `routing/ledger/` to a new temporary folder, and adds `plugins/bruh/defaults/priorities.md` as `priorities.md`.
-2. It runs `claude -p --agent bruh:bigm` with the input of the case in that folder. bigm gets only the tools Read, Grep, Glob, and `AskUserQuestion`, no MCP server (`--strict-mcp-config`), and no `BRUH_ROLE_KEY`. So the run writes nothing.
+1. It copies `routing/ledger/` to a new temporary folder, and adds `defaults/priorities.md` as `priorities.md`.
+2. It runs `claude -p --agent coordinator:bigm` with the input of the case in that folder. bigm gets only the tools Read, Grep, Glob, and `AskUserQuestion`, no MCP server (`--strict-mcp-config`), and no `BRUH_ROLE_KEY`. So the run writes nothing.
 3. It reads the `stream-json` output with `jq`, compares it with `expected.txt`, and prints `PASS <case>` or `FAIL <case>` with the difference.
 
 At the end, it prints the summary line `routing eval: <passed> of <cases>`. The options `--dry-run` and `--compare <expected> <output>` and the variable `EVAL_TIMEOUT` work as for the learner eval. Put `routing` before the option, for example `sh tests/eval/run.sh routing --dry-run`. With no `routing`, the driver runs the learner eval.
 
-Run the routing eval before each release, and put its summary line into the release notes. It does not run in CI. CI runs only `plugins/bruh/agents/agents_test.mjs`, which checks the dry run and the compare rule of the routing eval with no model call.
+Run the routing eval before each release, and put its summary line into the release notes. It does not run in CI. CI runs only `agents/agents_test.mjs`, which checks the dry run and the compare rule of the routing eval with no model call.
 
 ### Add a routing case
 

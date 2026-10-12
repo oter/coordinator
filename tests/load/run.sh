@@ -55,7 +55,7 @@ if [ "$interval" -lt 1 ] || [ "$interval" -gt 59 ]; then die "--interval must be
 [ "$minutes" -ge 1 ] || die "--minutes must be 1 or more"
 case $model in '' | *[!A-Za-z0-9._-]*) die "--model takes a model name such as haiku" ;; esac
 
-plugin=$root/plugins/bruh
+plugin=$root
 run_id=${LOAD_RUN:-$(random_id)}
 valid_run_id "$run_id" || die "LOAD_RUN must be 1 to 12 lowercase letters and digits"
 project=load-$run_id
@@ -177,7 +177,7 @@ run mkdir -p "$work/.claude"
 write_file "$work/.claude/settings.json" <<'EOF'
 {
   "permissions": {
-    "allow": ["mcp__plugin_bruh_bruh", "SendMessage", "ListAgents", "CronCreate"],
+    "allow": ["mcp__plugin_coordinator_coordinator", "SendMessage", "ListAgents", "CronCreate"],
     "deny": ["Bash", "Edit", "Write", "NotebookEdit", "WebFetch", "WebSearch"]
   }
 }

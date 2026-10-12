@@ -36,7 +36,7 @@ sweep_min=${SMOKE_SWEEP_MINUTES:-15}
 idle_min=${SMOKE_IDLE_MINUTES:-0}
 
 # BRUH_TEST_PLUGIN lets tests/test.sh point the driver at a fixture plugin.
-plugin=${BRUH_TEST_PLUGIN:-$root/plugins/bruh}
+plugin=${BRUH_TEST_PLUGIN:-$root}
 run_id=${SMOKE_RUN:-$(random_id)}
 valid_run_id "$run_id" || die "SMOKE_RUN must be 1 to 12 lowercase letters and digits"
 project=smoke-$run_id
@@ -341,7 +341,7 @@ if [ "$DRY" = 1 ]; then
 	result DRY preflight
 else
 	reason=$(preflight_common) || die "preflight: $reason"
-	for f in agents/bigm.md agents/clanker.md agents/clerk.md workflows/deliver.js ledger-template/mode.md; do
+	for f in agents/bigm.md agents/clanker.md agents/clerk.md ledger-template/mode.md; do
 		[ -f "$plugin/$f" ] || die "preflight: $plugin/$f does not exist"
 	done
 	mkdir -p "$evidence"
@@ -409,7 +409,7 @@ run mkdir -p "$proj/.claude" "$ledger/.claude"
 write_file "$proj/.claude/settings.json" <<'EOF'
 {
   "permissions": {
-    "allow": ["Workflow(bruh:deliver)", "mcp__plugin_bruh_bruh"],
+    "allow": ["Workflow(bruh:deliver)", "mcp__plugin_coordinator_coordinator"],
     "ask": ["Bash(./gate.sh)", "Bash(./gate.sh:*)", "Bash(sh gate.sh:*)", "Bash(sh ./gate.sh:*)", "Bash(bash gate.sh:*)", "Bash(bash ./gate.sh:*)"],
     "deny": ["Bash(git push:*)"]
   }
@@ -427,14 +427,14 @@ else
 	sed 's/^mode: .*/mode: autonomous/' "$ledger/mode.md" >"$ledger/mode.md.new" && mv "$ledger/mode.md.new" "$ledger/mode.md"
 	grep -q '^mode: autonomous$' "$ledger/mode.md" || die "setup: mode.md of the ledger template has no 'mode:' line"
 fi
-# The agent key and the role key are start settings of bigm that /bruh:init
+# The agent key and the role key are start settings of bigm that /coordinator:init
 # writes into the ledger (spec 3.4).
 write_file "$ledger/.claude/settings.json" <<'EOF'
 {
-  "agent": "bruh:bigm",
+  "agent": "coordinator:bigm",
   "env": {"BRUH_ROLE_KEY": "bigm"},
   "permissions": {
-    "allow": ["mcp__plugin_bruh_bruh", "SendMessage"],
+    "allow": ["mcp__plugin_coordinator_coordinator", "SendMessage"],
     "deny": ["Bash(git push:*)"]
   }
 }
@@ -444,7 +444,7 @@ commit_all "$ledger" "Create the smoke test ledger"
 
 # --- steps ------------------------------------------------------------------
 
-# init_index builds the index of a scratch repository as /bruh:init does: the
+# init_index builds the index of a scratch repository as /coordinator:init does: the
 # learner proposes the purpose and the doc pointers, and the non-interactive
 # init writes the index. A script cannot drive the interactive skill, and the
 # non-interactive init runs no learner, so the driver runs it (spec 20). The
@@ -466,7 +466,7 @@ init_index() {
 	run git -C "$shop_dir" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main ||
 		{ fail init-index "cannot write refs/remotes/origin/HEAD in $shop_dir"; return 1; }
 	# The input of spec 8.5 for one project with one repository.
-	learned=$(run_in "$base/root" claude -p --agent bruh:learner --plugin-dir "$plugin" "Root: $base/root
+	learned=$(run_in "$base/root" claude -p --agent coordinator:learner --plugin-dir "$plugin" "Root: $base/root
 Project key: $shop
 Repositories of the project: $shop
 Other projects: none
@@ -527,7 +527,7 @@ elif [ -z "$bigm_settings" ]; then
 fi
 idle_nonce=idle$(random_id)
 prompt="bruh smoke test, run $run_id. The ledger in this folder is in autonomous mode. Start one clanker with the role key $clanker for the project $project in the folder $proj. The work of the project is in TASK.md in that folder. Later in this test, a session sends you a message that starts with SMOKE-IDLE. When it arrives, send the clanker a message with the header 'DONE: smoke idle check <the word after SMOKE-IDLE>' and the body 'No answer is necessary.'. Follow your procedure for messages to a local session."
-run_in "$ledger" env CLAUDE_CODE_FORCE_SESSION_PERSISTENCE=1 claude --bg --agent bruh:bigm --name bigm \
+run_in "$ledger" env CLAUDE_CODE_FORCE_SESSION_PERSISTENCE=1 claude --bg --agent coordinator:bigm --name bigm \
 	--permission-mode auto --settings "$bigm_settings" --plugin-dir "$plugin" "$prompt" >/dev/null
 verify bigm 2 has_live bigm
 
@@ -585,7 +585,7 @@ elif ! run orca orchestration run-create --objective "bruh smoke test $run_id" -
 else
 	remote_run=$(jq -r '[.. | strings | select(test("^run_[0-9a-f]+$"))] | first // empty' "$(ev orca-run.json)" 2>/dev/null)
 	task="1. Run: orca orchestration ask --question '$remote_q' --timeout-ms 600000. The answer is one word. 2. Run: printf '%s' '<the answer word>' | tr 'abcdefghijklmnopqrstuvwxyz' 'nopqrstuvwxyzabcdefghijklm'. 3. Run: orca orchestration send --subject 'DONE: smoke remote $run_id' --body '<the output of step 2>'. Then stop."
-	spec="bruh smoke test, run $run_id. In this worktree, start a bruh clanker with this command and wait until it ends: claude -p --agent bruh:clanker --permission-mode auto \"$task\""
+	spec="bruh smoke test, run $run_id. In this worktree, start a bruh clanker with this command and wait until it ends: claude -p --agent coordinator:clanker --permission-mode auto \"$task\""
 	remote_worktree=bruh-smoke-$run_id
 	run orca orchestration worker-start --on "$SMOKE_ORCA_ENV" --worktree new-top-level --name "$remote_worktree" \
 		--repo "$SMOKE_ORCA_REPO" --setup skip --agent claude --spec "$spec" --json >"$(ev orca-worker.json)" || true

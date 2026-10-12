@@ -1,17 +1,17 @@
 #!/bin/sh
 # Evals of spec section 20. See tests/eval/README.md.
 #
-# learner (the default): runs bruh:learner of this checkout on each case of
+# learner (the default): runs coordinator:learner of this checkout on each case of
 # tests/eval/learner/ and checks its LINK and DOC lines against expected.txt of
 # the case.
-# routing: runs bruh:bigm of this checkout in a copy of the fixture ledger
+# routing: runs coordinator:bigm of this checkout in a copy of the fixture ledger
 # tests/eval/routing/ledger/ on each case of tests/eval/routing/, and checks its
 # commitment line and its AskUserQuestion calls against expected.txt of the case.
 #
 # Usage: sh tests/eval/run.sh [learner | routing] [--dry-run | --compare <expected> <output>]
 set -eu
 here=$(cd "$(dirname "$0")" && pwd)
-plugin=$(cd "$here/../.." && pwd)/plugins/bruh
+plugin=$(cd "$here/../.." && pwd)
 secs=${EVAL_TIMEOUT:-600}
 
 usage() {
@@ -42,7 +42,7 @@ compare() {
 }
 
 # The commitment line of bigm, "Work requests of the owner" of
-# plugins/bruh/agents/bigm.md. agents_test.mjs checks that bigm.md has this form.
+# agents/bigm.md. agents_test.mjs checks that bigm.md has this form.
 form='I send <work> to clanker-<project> as task <n>.'
 
 # compare_routing checks the stream-json output $2 of a bigm run against the
@@ -122,11 +122,11 @@ for c in "$here/$kind"/*/; do
 	cases=$((cases + 1))
 	if [ "$dry" = 1 ]; then
 		if [ "$kind" = routing ]; then
-			printf '%s: cd <tmp> && env -u BRUH_ROLE_KEY timeout %s claude -p --agent bruh:bigm --plugin-dir %s --tools Read,Grep,Glob,AskUserQuestion --strict-mcp-config --output-format stream-json --verbose "%s"\n' \
+			printf '%s: cd <tmp> && env -u BRUH_ROLE_KEY timeout %s claude -p --agent coordinator:bigm --plugin-dir %s --tools Read,Grep,Glob,AskUserQuestion --strict-mcp-config --output-format stream-json --verbose "%s"\n' \
 				"$name" "$secs" "$plugin" "$(cat "$c/input.txt")"
 		else
 			input=$(sed 's|<root>|<tmp>|g' "$c/input.txt")
-			printf '%s: cd <tmp> && env -u BRUH_ROLE_KEY timeout %s claude -p --agent bruh:learner --plugin-dir %s "%s"\n' \
+			printf '%s: cd <tmp> && env -u BRUH_ROLE_KEY timeout %s claude -p --agent coordinator:learner --plugin-dir %s "%s"\n' \
 				"$name" "$secs" "$plugin" "$input"
 		fi
 		continue
@@ -141,7 +141,7 @@ for c in "$here/$kind"/*/; do
 		cp -R "$here/routing/ledger/." "$dir/"
 		cp "$plugin/defaults/priorities.md" "$dir/priorities.md"
 		input=$(cat "$c/input.txt")
-		if (cd "$dir" && env -u BRUH_ROLE_KEY timeout "$secs" claude -p --agent bruh:bigm --plugin-dir "$plugin" --tools Read,Grep,Glob,AskUserQuestion --strict-mcp-config --output-format stream-json --verbose "$input") >"$out" 2>"$work/$name.err"; then
+		if (cd "$dir" && env -u BRUH_ROLE_KEY timeout "$secs" claude -p --agent coordinator:bigm --plugin-dir "$plugin" --tools Read,Grep,Glob,AskUserQuestion --strict-mcp-config --output-format stream-json --verbose "$input") >"$out" 2>"$work/$name.err"; then
 			rc=0
 		else
 			rc=$?
@@ -149,7 +149,7 @@ for c in "$here/$kind"/*/; do
 	else
 		cp -R "$c/root/." "$dir/"
 		input=$(sed "s|<root>|$(printf '%s' "$dir" | sed 's/[&|\\]/\\&/g')|g" "$c/input.txt")
-		if (cd "$dir" && env -u BRUH_ROLE_KEY timeout "$secs" claude -p --agent bruh:learner --plugin-dir "$plugin" "$input") >"$out" 2>"$work/$name.err"; then
+		if (cd "$dir" && env -u BRUH_ROLE_KEY timeout "$secs" claude -p --agent coordinator:learner --plugin-dir "$plugin" "$input") >"$out" 2>"$work/$name.err"; then
 			rc=0
 		else
 			rc=$?

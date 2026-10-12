@@ -76,8 +76,8 @@ PreToolUse)
 	hold=$(first_hold true)
 	[ -n "$hold" ] || exit 0
 	case $(field .tool_name) in
-	mcp__plugin_bruh_bruh__question_open | mcp__plugin_bruh_bruh__answer_wait | mcp__plugin_bruh_bruh__mail_post | \
-		mcp__plugin_bruh_bruh__mail_read | SendMessage | ToolSearch | StructuredOutput) exit 0 ;;
+	mcp__plugin_coordinator_coordinator__question_open | mcp__plugin_coordinator_coordinator__answer_wait | mcp__plugin_coordinator_coordinator__mail_post | \
+		mcp__plugin_coordinator_coordinator__mail_read | SendMessage | ToolSearch | StructuredOutput) exit 0 ;;
 	esac
 	if [ -n "$scout" ]; then
 		deny "bruh refusal stop: hold $hold holds this scout after a refusal. A scout cannot open a question: send DONE: scout <subject> refused with mail_post to your clanker, with the refused command and the refusal in the body, then stop."

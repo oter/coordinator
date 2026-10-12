@@ -95,14 +95,14 @@ func TestSessionLaunchArgv(t *testing.T) {
 			launch = c
 		}
 	}
-	want := []string{cwd, "FORCE=1", "ROLE=", "--bg", "--agent", "bruh:clanker", "--name", "clanker-my-app", "--permission-mode", "auto",
+	want := []string{cwd, "FORCE=1", "ROLE=", "--bg", "--agent", "coordinator:clanker", "--name", "clanker-my-app", "--permission-mode", "auto",
 		"--settings", settings, "--plugin-dir", root, "Read your start message with mail_read."}
 	if !slices.Equal(launch, want) {
 		t.Fatalf("launch =\n%q\nwant\n%q", launch, want)
 	}
 
 	// An installed plugin root gets no --plugin-dir.
-	env.PluginRoot = filepath.Join(env.Home, ".claude", "plugins", "cache", "oter", "bruh", "0.10.0")
+	env.PluginRoot = filepath.Join(env.Home, ".claude", "plugins", "cache", "oter", "coordinator", "0.13.0")
 	if err := os.MkdirAll(env.PluginRoot, 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -294,7 +294,7 @@ func launchClanker(t *testing.T, env Env) (map[string]any, string) {
 		}
 	}
 	root, _ := filepath.Abs("..")
-	want := []string{cwd, "FORCE=1", "ROLE=", "--bg", "--agent", "bruh:clanker", "--name", "clanker-my-app", "--permission-mode", "auto",
+	want := []string{cwd, "FORCE=1", "ROLE=", "--bg", "--agent", "coordinator:clanker", "--name", "clanker-my-app", "--permission-mode", "auto",
 		"--settings", settings, "--plugin-dir", root, "Read your start message with mail_read."}
 	if !slices.Equal(launch, want) {
 		t.Fatalf("launch =\n%q\nwant\n%q", launch, want)
@@ -305,7 +305,7 @@ func launchClanker(t *testing.T, env Env) (map[string]any, string) {
 func TestOrcaOff(t *testing.T) {
 	_, log := fakeOrca(t, printJSON(orcaReadyStatus), orcaList("clanker-my-app"), false)
 	env := testEnv(t, "bigm")
-	writeSettings(t, env, `{"pluginConfigs":{"bruh@oter":{"options":{"orca_local":"off"}}}}`)
+	writeSettings(t, env, `{"pluginConfigs":{"coordinator@oter":{"options":{"orca_local":"off"}}}}`)
 	res, _ := launchClanker(t, env)
 	if _, ok := res["orca"]; ok || res["orca_error"] != nil {
 		t.Fatalf("off: result = %v, want no orca fields", res)

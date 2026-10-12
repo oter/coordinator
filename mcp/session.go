@@ -384,7 +384,7 @@ func sessionTools() []Tool {
 				if err != nil {
 					return nil, err
 				}
-				args := []string{"--bg", "--agent", "bruh:" + agent, "--name", key, "--permission-mode", "auto", "--settings", settings}
+				args := []string{"--bg", "--agent", "coordinator:" + agent, "--name", key, "--permission-mode", "auto", "--settings", settings}
 				args = append(append(args, pd...), prompt)
 				e, err := launchBackground(c.Env, key, a.Cwd, args, "", func() error {
 					entries, err := listAgents(c.Env)

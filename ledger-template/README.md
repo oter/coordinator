@@ -27,7 +27,7 @@ This repository is the ledger of bruh. It describes all other repositories. Keep
 | `projects/<key>.md` | One file for each selected project, made from `projects/_template.md` |
 | `learn/tree.json` | The hierarchy of the projects and the scan settings. Plugin code writes it. |
 | `learn/projects/<key>.json` | The index of a project: the purpose, the repositories, the links to other projects, and the doc pointers. Plugin code writes it. |
-| `.claude/settings.json` | The start settings of bigm: the agent `bruh:bigm`, the role key, the env values, the deny rules, and the hooks. The init skill writes it. |
+| `.claude/settings.json` | The start settings of bigm: the agent `coordinator:bigm`, the role key, the env values, the deny rules, and the hooks. The init skill writes it. |
 
 ## Rules for each row
 

@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	// qidRE copies qidPattern of plugins/bruh/mcp/env.go: this module cannot import mcp.
+	// qidRE copies qidPattern of mcp/env.go: this module cannot import mcp.
 	qidRE = regexp.MustCompile(`^Q-[a-z0-9]+(?:-[a-z0-9]+)+-[0-9]+$`)
 	// verdictRE is the permission reply format of the channels reference: the ID alphabet is a to z without l.
 	verdictRE = regexp.MustCompile(`(?i)^\s*(y|yes|n|no)\s+([a-km-z]{5})\s*$`)
@@ -403,7 +403,7 @@ func (s *server) handle(ctx context.Context, req request) {
 		s.result(req.ID, map[string]any{
 			"protocolVersion": version,
 			"capabilities":    map[string]any{"experimental": exp, "tools": map[string]any{}},
-			"serverInfo":      map[string]any{"name": "bruh-slack", "version": "0.12.2"},
+			"serverInfo":      map[string]any{"name": "coordinator-slack", "version": "0.13.0"},
 			"instructions":    instructions,
 		})
 	case "ping":

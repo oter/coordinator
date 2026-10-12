@@ -245,7 +245,7 @@ func TestRoleSettingsWriteAllow(t *testing.T) {
 		{name: "clanker writes for its clerk", caller: clanker, target: "clerk-" + project + "-1", rule: readRule(alpha), wantErr: roleErr},
 		{name: "bigm writes for the ledger clerk", target: "clerk-ledger", rule: readRule(alpha), wantErr: roleErr},
 		{name: "no index file", rule: readRule(alpha), noIndex: true},
-		{name: "no init config", rule: readRule(alpha), noConfig: true, wantErr: "no ledger path in <data>/init/config.json; run /bruh:init"},
+		{name: "no init config", rule: readRule(alpha), noConfig: true, wantErr: "no ledger path in <data>/init/config.json; run /coordinator:init"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			env := setup(t, tt.noConfig, tt.noIndex)
@@ -292,19 +292,19 @@ func TestRoleSettingsWriteScout(t *testing.T) {
 	}
 	// The git rules cover the git -C <path> form that the scout procedure prescribes. A scout
 	// runs no git fetch (spec 3.6.1), in either form.
-	for _, d := range []string{"Edit", "Write", "NotebookEdit", "Workflow", "mcp__plugin_bruh_bruh__session_launch",
+	for _, d := range []string{"Edit", "Write", "NotebookEdit", "Workflow", "mcp__plugin_coordinator_coordinator__session_launch",
 		"Bash(git push:*)", "Bash(git -C * push)", "Bash(git -C * push *)", "Bash(git -C * commit *)", "Bash(git -C * reset *)",
 		"Bash(git fetch:*)", "Bash(git -C * fetch)", "Bash(git -C * fetch *)",
 		// Writes that also have read forms, and the fetch of git remote update (spec 3.6.1).
 		"Bash(git -C * branch *)", "Bash(git -C * remote *)", "Bash(git -C * config *)",
 		"Bash(git -C * update-ref *)", "Bash(git gc:*)", "Bash(git -C * reflog expire *)",
 		// A monitor outlives the scout, so a scout starts, stops, and reports none (spec 9.5).
-		"mcp__plugin_bruh_bruh__monitor_start", "mcp__plugin_bruh_bruh__monitor_stop", "mcp__plugin_bruh_bruh__monitor_report"} {
+		"mcp__plugin_coordinator_coordinator__monitor_start", "mcp__plugin_coordinator_coordinator__monitor_stop", "mcp__plugin_coordinator_coordinator__monitor_report"} {
 		if !slices.Contains(scoutDeny, d) {
 			t.Errorf("scoutDeny has no %q", d)
 		}
 	}
-	if slices.Contains(scoutDeny, "mcp__plugin_bruh_bruh__monitor_list") {
+	if slices.Contains(scoutDeny, "mcp__plugin_coordinator_coordinator__monitor_list") {
 		t.Error("scoutDeny has monitor_list, a read-only tool")
 	}
 	// A key is used once: the second write is refused and names the next free key.

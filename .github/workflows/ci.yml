@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        module: [plugins/bruh/mcp, plugins/bruh/channels/slack]
+        module: [mcp, channels/slack]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -49,7 +49,6 @@ jobs:
           node-version: 22
       # The lockfile pins Claude Code and its platform packages by hash.
       - run: npm ci --prefix .github/tools/claude-code
-      - run: .github/tools/claude-code/node_modules/.bin/claude plugin validate ./plugins/bruh
       - run: .github/tools/claude-code/node_modules/.bin/claude plugin validate .
   node:
     strategy:
@@ -61,4 +60,4 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
-      - run: node --test plugins/bruh/agents/agents_test.mjs plugins/bruh/workflows/deliver.test.mjs plugins/bruh/workflows/implement.test.mjs
+      - run: node --test agents/agents_test.mjs

@@ -2,9 +2,9 @@ import { expect, mock, test } from 'claude-code/testing'
 import type { On } from 'claude-code'
 import { PHASES, readPhase, SOFT } from './register.js'
 
-// A small fake world beneath the plugin: the bruh data folder under HOME=/h,
+// A small fake world beneath the plugin: the coordinator data folder under HOME=/h,
 // a ledger at /l, the output of `claude agents --json --all`, and a $.store.
-const D = '/h/.claude/plugins/data/bruh-oter'
+const D = '/h/.claude/plugins/data/coordinator-oter'
 const LEDGER = `| Owner | Task | Expected deliverable | State | Next check (UTC) | Link | Source read |
 |---|---|---|---|---|---|---|
 | clanker-bruh | task 12: poller waits on the lock | PR on oter/bruh | working (clerk-bruh-pollerwait) | 2026-10-05T17:22:43Z |  | x |
@@ -119,7 +119,7 @@ function withEnded(w: ReturnType<typeof world>) {
 }
 
 const mount = ($: any, bodyColumns = 200) => $.ui.mount({
-  plugin: 'bruh', surface: 'terminal', component: 'Pane', requestId: 'bruh-board',
+  plugin: 'coordinator', surface: 'terminal', component: 'Pane', requestId: 'bruh-board',
   props: { title: 'bruh board', isFocused: true, bodyColumns, placement: 'dock' as const, scroll: { offset: 0, bodyRows: 60 }, view: {} },
 })
 // What the pane shows: each Text, and each Button as its key, hotkey (none) and label.
@@ -696,7 +696,7 @@ test('the /config pick switches the open pane at runtime, with no new /bruh-boar
   const ui = await mount($)
   expect(await ui.find({ key: 'card-done' })).toBeDefined()
   for (const design of ['pipeline', 'buckets', 'cards']) {
-    const set = await $.config.set({ key: 'bruh.board_design', value: design })
+    const set = await $.config.set({ key: 'coordinator.board_design', value: design })
     expect(set.value).toBe(design)
     expect(Boolean(await ui.find({ key: 'card-done' }))).toBe(design === 'cards')
     expect(Boolean(await ui.find({ key: 'bar-done' }))).toBe(design === 'buckets')

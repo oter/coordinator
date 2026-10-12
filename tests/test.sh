@@ -151,7 +151,7 @@ end_group
 check "count_all counts unread and read" eq "$(count_all "$tmp/box")" 3
 
 group "data_dir finds the data folder"
-row "the inline plugin id" eq "$(unset BRUH_TEST_DATA; CLAUDE_CODE_PLUGIN_CACHE_DIR=/p data_dir)" /p/data/bruh-inline
+row "the inline plugin id" eq "$(unset BRUH_TEST_DATA; CLAUDE_CODE_PLUGIN_CACHE_DIR=/p data_dir)" /p/data/coordinator-inline
 row "BRUH_TEST_DATA" eq "$(BRUH_TEST_DATA=/d data_dir)" /d
 end_group
 
@@ -159,8 +159,8 @@ end_group
 out=$(BRUH_TRUSTED_REPO="$tmp/repo" SMOKE_RUN=dry1 sh "$here/smoke/run.sh" --dry-run 2>&1)
 check "smoke dry run exits 0" eq "$(BRUH_TRUSTED_REPO="$tmp/repo" SMOKE_RUN=dry1 sh "$here/smoke/run.sh" --dry-run >/dev/null 2>&1; echo $?)" 0
 group "smoke dry run prints each step"
-row "starts bigm with the documented flags" contains "$out" "claude --bg --agent bruh:bigm --name bigm --permission-mode auto --settings"
-row "loads the plugin of the checkout" contains "$out" "--plugin-dir $(cd "$here/.." && pwd)/plugins/bruh"
+row "starts bigm with the documented flags" contains "$out" "claude --bg --agent coordinator:bigm --name bigm --permission-mode auto --settings"
+row "loads the plugin of the checkout" contains "$out" "--plugin-dir $(cd "$here/.." && pwd) "
 row "writes the bigm role settings" contains "$out" '"name":"role_settings_write","arguments":{"role_key":"bigm"}'
 row "asks a plain claude in the ledger for its role name" contains "$out" "claude -p --strict-mcp-config --tools '' --max-turns 1 --plugin-dir"
 row "stops the clanker to simulate the idle stop" contains "$out" "claude stop '<clanker id>'"
@@ -168,7 +168,7 @@ row "lets bigm, not the driver, message the clanker" contains "$out" "session na
 row "uses a linked worktree" contains "$out" "worktree add -q --detach"
 row "skips the remote step" contains "$out" "SKIP remote"
 row "builds the index of a scratch repository with init --answers" contains "$out" " init --answers "
-row "builds the index of a scratch repository with the learner" contains "$out" "--agent bruh:learner"
+row "builds the index of a scratch repository with the learner" contains "$out" "--agent coordinator:learner"
 row "runs init with a scratch settings file" contains "$out" "BRUH_SETTINGS_FILE="
 end_group
 # A variadic option of claude (<tools...>, <directories...>, <configs...>) reads
@@ -265,7 +265,7 @@ end_group
 # fixture $FAKE_AGENTS for `claude agents`, records `claude stop`, and, at the
 # first `claude --bg`, switches to the fixture $FAKE_AGENTS_AFTER and creates
 # clerk-ledger data, as bigm would.
-mkdir -p "$tmp/fake/bin" "$tmp/fake/plugin/agents" "$tmp/fake/plugin/workflows" "$tmp/fake/plugin/ledger-template"
+mkdir -p "$tmp/fake/bin" "$tmp/fake/plugin/agents" "$tmp/fake/plugin/ledger-template"
 cat >"$tmp/fake/bin/claude" <<'SH'
 #!/bin/sh
 case $1 in
@@ -285,10 +285,10 @@ logs) ;;
 esac
 SH
 chmod +x "$tmp/fake/bin/claude"
-for f in agents/bigm.md agents/clanker.md agents/clerk.md workflows/deliver.js; do : >"$tmp/fake/plugin/$f"; done
+for f in agents/bigm.md agents/clanker.md agents/clerk.md; do : >"$tmp/fake/plugin/$f"; done
 echo 'mode: human' >"$tmp/fake/plugin/ledger-template/mode.md"
-ln -s "$(cd "$here/.." && pwd)/plugins/bruh/mcp" "$tmp/fake/plugin/mcp"
-ln -s "$(cd "$here/.." && pwd)/plugins/bruh/defaults" "$tmp/fake/plugin/defaults"
+ln -s "$(cd "$here/.." && pwd)/mcp" "$tmp/fake/plugin/mcp"
+ln -s "$(cd "$here/.." && pwd)/defaults" "$tmp/fake/plugin/defaults"
 git init -q "$tmp/strust" && git -C "$tmp/strust" -c user.name=t -c user.email=t@example.com commit -q --allow-empty -m init
 srun=$(cd "$tmp/strust" && pwd -P)/.bruh-test/smoke-fk1
 smoke_fake() {
@@ -342,8 +342,8 @@ end_group
 # Learner eval driver: dry run and the compare rule of spec 20
 eout=$(sh "$here/eval/run.sh" --dry-run 2>&1)
 check "learner eval dry run exits 0" eq "$(sh "$here/eval/run.sh" --dry-run >/dev/null 2>&1; echo $?)" 0
-check "learner eval dry run prints one learner command for each case" eq "$(printf '%s\n' "$eout" | grep -c 'env -u BRUH_ROLE_KEY timeout [0-9]* claude -p --agent bruh:learner')" "$(find "$here/eval/learner" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
-check "learner eval dry run loads the plugin of the checkout" contains "$eout" "--plugin-dir $(cd "$here/.." && pwd)/plugins/bruh"
+check "learner eval dry run prints one learner command for each case" eq "$(printf '%s\n' "$eout" | grep -c 'env -u BRUH_ROLE_KEY timeout [0-9]* claude -p --agent coordinator:learner')" "$(find "$here/eval/learner" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
+check "learner eval dry run loads the plugin of the checkout" contains "$eout" "--plugin-dir $(cd "$here/.." && pwd) "
 mkdir -p "$tmp/eval"
 printf 'LINK auth: shop/go.mod:5\nDOC: shop/README.md\n' >"$tmp/eval/expected.txt"
 cp "$tmp/eval/expected.txt" "$tmp/eval/passes-the-expected-lines.txt"
@@ -368,11 +368,11 @@ replay() {
 	printf '%s\n' "$1" | grep '^+ mcp as ' | while IFS= read -r line; do
 		rest=${line#+ mcp as }
 		req=${rest#*: }
-		DRY=0 BRUH_DATA="$tmp/replay" BRUH_ROLE_KEY=${rest%%: *} BRUH_PLUGIN_ROOT="$here/../plugins/bruh" BRUH_TEST_MCP="$tmp/bruh-mcp" \
+		DRY=0 BRUH_DATA="$tmp/replay" BRUH_ROLE_KEY=${rest%%: *} BRUH_PLUGIN_ROOT="$here/.." BRUH_TEST_MCP="$tmp/bruh-mcp" \
 			mcp_call "$(printf '%s' "$req" | jq -r .params.name)" "$(printf '%s' "$req" | jq -c .params.arguments)" >/dev/null || return 1
 	done
 }
-GOTOOLCHAIN=local go build -C "$here/../plugins/bruh/mcp" -o "$tmp/bruh-mcp" .
+GOTOOLCHAIN=local go build -C "$here/../mcp" -o "$tmp/bruh-mcp" .
 smoke_out=$(BRUH_TRUSTED_REPO="$tmp/repo" SMOKE_RUN=dry4 sh "$here/smoke/run.sh" --dry-run 2>&1)
 group "the MCP server accepts each call of the drivers"
 row "smoke" replay "$smoke_out"
@@ -383,137 +383,16 @@ ticks() {
 	pairs=$(printf '%s\n' "$1" | grep -o 'Your role key is [a-z0-9-]*\. Your partner session is [a-z0-9-]*\.' | sort -u)
 	[ "$(printf '%s\n' "$pairs" | grep -c .)" -eq "$2" ] || return 1
 	printf '%s\n' "$pairs" | while read -r _ _ _ _ me _ _ _ _ next; do
-		DRY=0 BRUH_DATA="$tmp/replay" BRUH_ROLE_KEY=${me%.} BRUH_PLUGIN_ROOT="$here/../plugins/bruh" BRUH_TEST_MCP="$tmp/bruh-mcp" \
+		DRY=0 BRUH_DATA="$tmp/replay" BRUH_ROLE_KEY=${me%.} BRUH_PLUGIN_ROOT="$here/.." BRUH_TEST_MCP="$tmp/bruh-mcp" \
 			mcp_call mail_post "$(jq -cn --arg to "${next%.}" '{to: $to, header: "P2 Q-load-tick-1: load tick", body: "tick"}')" >/dev/null || return 1
 	done
 }
 check "the MCP server accepts each tick of the 8 load sessions" ticks "$load8" 8
 
-# lane.sh: a private copy of the tree for one ticket, its patch, and the merge back
-lane="$here/../plugins/bruh/scripts/lane.sh"
-git init -q "$tmp/ln"
-printf 'a\n' >"$tmp/ln/keep.txt" && printf 'b\n' >"$tmp/ln/gone.txt" && printf 'c\n' >"$tmp/ln/edit.txt"
-mkdir -p "$tmp/ln/.scratch" "$tmp/ln/node_modules/.bin" && printf 's\n' >"$tmp/ln/.scratch/spec.md" && printf 't\n' >"$tmp/ln/node_modules/.bin/tsc"
-git -C "$tmp/ln" add keep.txt gone.txt edit.txt && git -C "$tmp/ln" -c user.name=t -c user.email=t@example.com commit -q -m base
-printf 'dirty\n' >"$tmp/ln/keep.txt" # the shared tree is dirty on purpose
-lanes="$tmp/lanes"
-lp=$(ROOT="$tmp/ln" LANES="$lanes" sh "$lane" start t-01-a 2>/dev/null)
-check "lane start prints the lane folder" eq "$lp" "$lanes/t-01-a"
-check "lane start copies the dirty tree" eq "$(cat "$lp/keep.txt" 2>/dev/null)" dirty
-check "lane start skips the top-level .scratch" not test -e "$lp/.scratch"
-check "lane start keeps node_modules/.bin" test -e "$lp/node_modules/.bin/tsc"
-check "a new lane shows no change" eq "$(git -C "$lp" diff --cached refs/lane/base 2>/dev/null)" ""
-printf 'C\n' >"$lp/edit.txt" && rm "$lp/gone.txt" && printf 'n\n' >"$lp/new.txt"
-check "lane start keeps an existing lane with its work" eq "$(ROOT="$tmp/ln" LANES="$lanes" sh "$lane" start t-01-a 2>/dev/null && cat "$lp/edit.txt")" "$lp
-C"
-out=$(ROOT="$tmp/ln" LANES="$lanes" sh "$lane" patch t-01-a 2>&1)
-check "lane patch counts the files of the ticket" contains "$out" "(3 files)"
-rc=0
-ROOT="$tmp/ln" LANES="$lanes" sh "$lane" apply t-01-a >/dev/null 2>&1 || rc=$?
-group "lane apply brings each change of the ticket"
-row "exits 0" eq "$rc" 0
-row "a changed file" eq "$(cat "$tmp/ln/edit.txt")" C
-row "a new file" test -f "$tmp/ln/new.txt"
-row "a deletion" not test -e "$tmp/ln/gone.txt"
-end_group
-check "lane apply keeps the dirty work of the shared tree" eq "$(cat "$tmp/ln/keep.txt")" dirty
-check "lane apply leaves the index of the shared tree clean" eq "$(git -C "$tmp/ln" diff --cached --name-only)" ""
-# shellcheck disable=SC2016 # the inner shell expands $1, $2, and $3
-check "after clean, lane start makes a new copy" sh -c 'ROOT="$1" LANES="$2" sh "$3" start t-05-e >/dev/null && printf x >"$2/t-05-e/edit.txt" && ROOT="$1" LANES="$2" sh "$3" clean t-05-e >/dev/null && ROOT="$1" LANES="$2" sh "$3" start t-05-e >/dev/null && ! grep -qx x "$2/t-05-e/edit.txt"; r=$?; ROOT="$1" LANES="$2" sh "$3" clean t-05-e >/dev/null; exit $r' _ "$tmp/ln" "$lanes" "$lane"
-# shellcheck disable=SC2016 # the inner shell expands $1, $2, and $3
-check "lane clean removes the lane and the patch" sh -c 'ROOT="$1" LANES="$2" sh "$3" clean t-01-a >/dev/null && ! test -e "$2/t-01-a" && ! test -e "$2/t-01-a.patch"' _ "$tmp/ln" "$lanes" "$lane"
-group "lane refuses a bad ticket ID or command"
-row "../x, the rule of a leading dot" not env ROOT="$tmp/ln" LANES="$lanes" sh "$lane" start ../x
-row ".x, the rule of a leading dot" not env ROOT="$tmp/ln" LANES="$lanes" sh "$lane" start .x
-row "a/x, the rule of a character outside A-Za-z0-9._-" refused "bad ticket ID: a/x" env ROOT="$tmp/ln" LANES="$lanes" sh "$lane" start a/x
-row "an unknown command" not env ROOT="$tmp/ln" LANES="$lanes" sh "$lane" merge t-02-b
-end_group
-check "lane refuses a ROOT that is not the top of a work tree" not env ROOT="$tmp/ln/node_modules" LANES="$lanes" sh "$lane" start t-02-b
-check "lane apply refuses a missing patch" not env ROOT="$tmp/ln" LANES="$lanes" sh "$lane" apply t-09-z
-: >"$lanes/t-08-y.patch"
-check "lane apply of an empty patch says so" contains "$(ROOT="$tmp/ln" LANES="$lanes" sh "$lane" apply t-08-y 2>&1)" "empty patch"
-# A pattern of EXCLUDES is for rsync, not for the shell of the current folder.
-printf 'x\n' >"$tmp/ln/gl1"
-mkdir -p "$tmp/cwdx" && : >"$tmp/cwdx/glzz"
-lp=$(cd "$tmp/cwdx" && ROOT="$tmp/ln" LANES="$lanes" EXCLUDES='gl*' sh "$lane" start t-04-d 2>/dev/null)
-# shellcheck disable=SC2016 # the inner shell expands $1
-check "the shell does not expand a pattern of EXCLUDES in the current folder" sh -c 'test -d "$1" && ! test -e "$1/gl1"' _ "$lp"
-ROOT="$tmp/ln" LANES="$lanes" sh "$lane" clean t-04-d >/dev/null
-rm -f "$tmp/ln/gl1"
-# A nested repository: no nested .git in the lane, and its edits reach the patch.
-git init -q "$tmp/ln/sub" && printf 's\n' >"$tmp/ln/sub/f.txt"
-lp=$(ROOT="$tmp/ln" LANES="$lanes" sh "$lane" start t-03-c 2>/dev/null)
-# shellcheck disable=SC2016 # the inner shell expands $1
-check "lane start copies a nested repository without its .git" sh -c 'test -f "$1/sub/f.txt" && ! test -e "$1/sub/.git"' _ "$lp"
-printf 'S\n' >"$lp/sub/f.txt"
-ROOT="$tmp/ln" LANES="$lanes" sh "$lane" patch t-03-c >/dev/null 2>&1
-check "an edit in a nested repository reaches the patch" grep -q 'sub/f.txt' "$lanes/t-03-c.patch"
-ROOT="$tmp/ln" LANES="$lanes" sh "$lane" clean t-03-c >/dev/null
-rm -rf "$tmp/ln/sub"
-# A linked worktree has a .git pointer file; the lane must not share its index.
-git -C "$tmp/ln" -c user.name=t -c user.email=t@example.com commit -qam work
-git -C "$tmp/ln" worktree add -q "$tmp/lnw" -b lnw
-lp=$(ROOT="$tmp/lnw" LANES="$lanes" sh "$lane" start t-02-b 2>/dev/null)
-rm "$lp/keep.txt"
-ROOT="$tmp/lnw" LANES="$lanes" sh "$lane" patch t-02-b >/dev/null 2>&1
-check "a lane of a linked worktree leaves the index of the worktree clean" eq "$(git -C "$tmp/lnw" status --porcelain)" ""
-# shellcheck disable=SC2016 # the inner shell expands $1, $2, and $3
-check "a lane of a linked worktree applies a deletion" sh -c 'ROOT="$1" LANES="$2" sh "$3" apply t-02-b >/dev/null && ! test -e "$1/keep.txt"' _ "$tmp/lnw" "$lanes" "$lane"
-# A kept lane must belong to the same ROOT, HEAD, and run (fix round 3, R1).
-mkrepo() {
-	git init -q "$1" && printf '%s\n' "$2" >"$1/g.txt" && git -C "$1" add g.txt &&
-		git -C "$1" -c user.name=t -c user.email=t@example.com commit -q -m base
-}
-mkrepo "$tmp/ra" a && mkrepo "$tmp/rb" b
-rl="$tmp/rlanes"
-la=$(ROOT="$tmp/ra" LANES="$rl" sh "$lane" start mr1-01-schema 2>/dev/null)
-printf 'edit of A\n' >"$la/g.txt"
-lb=$(ROOT="$tmp/rb" LANES="$rl" sh "$lane" start mr1-01-schema 2>/dev/null)
-check "a lane of another repository is not kept" eq "$(cat "$lb/g.txt")" b
-ROOT="$tmp/rb" LANES="$rl" sh "$lane" patch mr1-01-schema >/dev/null 2>&1
-ROOT="$tmp/rb" LANES="$rl" sh "$lane" apply mr1-01-schema >/dev/null 2>&1
-printf 'edit of B\n' >"$lb/g.txt"
-check "a lane of the same ROOT, HEAD, and run is kept" eq "$(ROOT="$tmp/rb" LANES="$rl" sh "$lane" start mr1-01-schema >/dev/null 2>&1; cat "$lb/g.txt")" "edit of B"
-group "a lane of another run, HEAD, or base is not kept"
-row "another run" eq "$(ROOT="$tmp/rb" LANES="$rl" LANE_RUN=other sh "$lane" start mr1-01-schema >/dev/null 2>&1; cat "$lb/g.txt")" b
-printf 'edit of run other\n' >"$lb/g.txt"
-git -C "$tmp/rb" -c user.name=t -c user.email=t@example.com commit -q --allow-empty -m next
-row "another HEAD" eq "$(ROOT="$tmp/rb" LANES="$rl" LANE_RUN=other sh "$lane" start mr1-01-schema >/dev/null 2>&1; cat "$lb/g.txt")" b
-printf 'edit again\n' >"$lb/g.txt"
-git -C "$lb" update-ref -d refs/lane/base
-row "no refs/lane/base" eq "$(ROOT="$tmp/rb" LANES="$rl" LANE_RUN=other sh "$lane" start mr1-01-schema >/dev/null 2>&1; cat "$lb/g.txt")" b
-row "the remade lane has refs/lane/base again" git -C "$lb" rev-parse -q --verify refs/lane/base
-end_group
-# A patch is applied once. Four identical blocks give repeated context: plain git apply
-# inserts the same line a second time at an offset, and lane.sh apply does not.
-for _ in 1 2 3 4; do printf 'x\ny\nz\nw\n'; done >"$tmp/ra/g.txt" && git -C "$tmp/ra" -c user.name=t -c user.email=t@example.com commit -qam blocks
-ROOT="$tmp/ra" LANES="$rl" sh "$lane" clean mr1-02-rep >/dev/null
-lr=$(ROOT="$tmp/ra" LANES="$rl" sh "$lane" start mr1-02-rep 2>/dev/null)
-awk 'NR == 7 { print "inserted" } { print }' "$lr/g.txt" >"$lr/g.new" && mv "$lr/g.new" "$lr/g.txt"
-ROOT="$tmp/ra" LANES="$rl" sh "$lane" patch mr1-02-rep >/dev/null 2>&1
-cp -R "$tmp/ra" "$tmp/ra-plain"
-git -C "$tmp/ra-plain" apply "$rl/mr1-02-rep.patch" && git -C "$tmp/ra-plain" apply "$rl/mr1-02-rep.patch" 2>/dev/null
-group "a patch applies once"
-row "plain git apply of the patch twice inserts the line twice (the reproduction)" eq "$(grep -c inserted "$tmp/ra-plain/g.txt")" 2
-ROOT="$tmp/ra" LANES="$rl" sh "$lane" apply mr1-02-rep >/dev/null 2>&1
-ROOT="$tmp/ra" LANES="$rl" sh "$lane" apply mr1-02-rep >/dev/null 2>&1
-row "lane.sh apply twice inserts the line once" eq "$(grep -c inserted "$tmp/ra/g.txt")" 1
-end_group
-printf 'more\n' >>"$lr/g.txt"
-ROOT="$tmp/ra" LANES="$rl" sh "$lane" patch mr1-02-rep >/dev/null 2>&1
-group "an applied lane refuses a changed patch"
-row "the apply fails" not env ROOT="$tmp/ra" LANES="$rl" sh "$lane" apply mr1-02-rep
-row "the refused patch changes nothing" eq "$(grep -c more "$tmp/ra/g.txt")" 0
-end_group
-# The root half of the lane meta: a clone at the same HEAD is another root.
-git clone -q "$tmp/rb" "$tmp/rc"
-ROOT="$tmp/rb" LANES="$rl" sh "$lane" clean mr1-03-root >/dev/null
-lo=$(ROOT="$tmp/rb" LANES="$rl" sh "$lane" start mr1-03-root 2>/dev/null)
-printf 'edit of rb\n' >"$lo/g.txt"
-check "a lane of another root at the same HEAD is not kept" eq "$(ROOT="$tmp/rc" LANES="$rl" sh "$lane" start mr1-03-root >/dev/null 2>&1; cat "$lo/g.txt")" b
+# The lane.sh checks moved to oter/bruh with scripts/lane.sh.
 
 # The waiter of spec 9.5 (M1): scripts/wake.sh, in a temporary data folder.
-wake="$here/../plugins/bruh/scripts/wake.sh"
+wake="$here/../scripts/wake.sh"
 wd="$tmp/wake"
 mkdir -p "$wd"
 out=$(unset BRUH_ROLE_KEY; CLAUDE_PLUGIN_DATA="$wd" sh "$wake" </dev/null 2>&1; echo "exit $?")
