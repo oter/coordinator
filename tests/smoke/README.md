@@ -38,7 +38,7 @@ BRUH_TRUSTED_REPO=<scratch folder>/bruh-smoke-home sh tests/smoke/run.sh --dry-r
 
 Before the run:
 
-- The run needs the bruh plugin loaded next to the coordinator, because the greet clerk runs `/bruh:deliver` (the `deliver` step). The driver does not check this. How the run loads the bruh plugin stays open until the standalone fallback of the workflows lands (step 3 of the work plan of the plugin split). Agent-derived, needs owner decision.
+- The smoke run cannot pass before step 3 of the work plan of the plugin split. Each clerk of the run runs `/bruh:deliver` for its task, and the bruh 0.12.x workflows call the bruh MCP tools by their full names. So their questions land in the data folder of bruh (`~/.claude/plugins/data/bruh-oter`), not in `coordinator-inline`. Do not run it while bruh 0.12.x is enabled: the bruh 0.12.x roles and hooks then run twice, and the run writes into the live bruh data. The driver does not check this. Agent-derived, needs owner decision.
 - Stop your own bigm and your own `clerk-ledger`. These two role keys are fixed, and a nudge goes to a session name. The driver refuses to start when the name of a live session starts with `bigm`, `clerk-ledger`, `clanker-smoke-<run>`, or `clerk-smoke-<run>-`.
 - Claude Code gives a session with no name the name `<folder name>-<hex>`. When the name of your ledger folder starts with `bigm`, each open session in that folder stops the run. Before the run, close or rename each session whose name starts with `bigm`.
 - The driver refuses to start when the plugin data folder of the checkout (`~/.claude/plugins/data/coordinator-inline/`) already has state of `bigm` or `clerk-ledger`, such as `mail/bigm/` or `handoffs/bigm.md`.

@@ -8,11 +8,11 @@ A defect of bruh is a result of the plugin that breaks the specification, the de
 
 ## Steps
 
-1. Find the repository of the file with the defect. For a file of the coordinator plugin, read the value `repository` of `<plugin_root>/.claude-plugin/plugin.json` (oter/coordinator). For a file of the bruh plugin (the workflows, the implement skill, `house-rules.md`, and `lane.sh`), read the value `repository` of `<bruh_root>/.claude-plugin/plugin.json` (oter/bruh). `<bruh_root>` is the `installPath` of `bruh@oter` in `~/.claude/plugins/installed_plugins.json` (for example `~/.claude/plugins/cache/oter/bruh/0.13.0`). The report goes to this repository. Agent-derived, needs owner decision.
+1. Find the repository of the file with the defect. For a file of the coordinator plugin, read the value `repository` of `<plugin_root>/.claude-plugin/plugin.json` (oter/coordinator). For a file of the bruh plugin (the workflows, the implement skill, `house-rules.md`, and `lane.sh`), read the value `repository` of `<bruh_root>/.claude-plugin/plugin.json` (oter/bruh). `<bruh_root>` is the `installPath` of the entry with `"scope": "user"` of `bruh@oter` in `~/.claude/plugins/installed_plugins.json` (for example `~/.claude/plugins/cache/oter/bruh/0.13.0`); agent-derived, needs owner decision. The report goes to this repository. Agent-derived, needs owner decision.
 2. Search its open and closed issues for the same defect: `gh issue list --repo <repository> --state all --search '<words>'`. For a duplicate, tell the owner its link, and stop.
 3. Write the draft with the fields of the bug form of the repository:
    - the title;
-   - the Claude Code version (`claude --version`), the bruh version (`version` of `bruh_info`), the Go version (`go version`), and the operating system;
+   - the Claude Code version (`claude --version`), the version of the plugin of step 1 (for a coordinator file the `version` of `bruh_info`, for a bruh plugin file the `version` of `<bruh_root>/.claude-plugin/plugin.json`; agent-derived, needs owner decision), the Go version (`go version`), and the operating system;
    - the role where the defect occurs: bigm, clanker, clerk, workflow, init skill, hook or status line tap, MCP server, or other;
    - the steps to reproduce, the expected result with the section of the specification when you know it, the actual result, and the evidence.
 

@@ -15,7 +15,7 @@ Your role key is in `BRUH_ROLE_KEY`. It tells you which clerk you are:
 - `clerk-<project>-scout<n>`: a scout clerk, for one read-only question. Your parent is the clanker `clanker-<project>`, which starts you. Follow "The scout clerk".
 - `clerk-ledger`: the ledger clerk. Your parent is bigm. Follow "The ledger clerk".
 
-Call `bruh_info` to get `role_key`, `plugin_root`, and `data_dir`. The bruh MCP tools have the prefix `mcp__plugin_coordinator_coordinator__` in this session. `<bruh_root>` is the `installPath` of `bruh@oter` in `~/.claude/plugins/installed_plugins.json` (for example `~/.claude/plugins/cache/oter/bruh/0.13.0`).
+Call `bruh_info` to get `role_key`, `plugin_root`, and `data_dir`. The bruh MCP tools have the prefix `mcp__plugin_coordinator_coordinator__` in this session. `<bruh_root>` is the `installPath` of the entry with `"scope": "user"` of `bruh@oter` in `~/.claude/plugins/installed_plugins.json` (for example `~/.claude/plugins/cache/oter/bruh/0.13.0`); agent-derived, needs owner decision.
 
 ## Rules that always apply
 
