@@ -8,7 +8,7 @@ Only the latest release gets security fixes.
 
 Do not open a public issue for a vulnerability. Report it privately through GitHub private vulnerability reporting:
 
-<https://github.com/oter/bruh/security/advisories/new>
+<https://github.com/oter/coordinator/security/advisories/new>
 
 Include:
 
@@ -27,7 +27,7 @@ bruh coordinates Claude Code sessions. It does not make them safe. Read this bef
 - **Roles are not isolated from each other.** All roles run as the same user on the same machine. The MCP server, the merge gate, and the commands of bruh know the role of the caller only from the variable `BRUH_ROLE_KEY`. Any Bash command of any session can set that variable and call the scripts or the server as another role, for example as bigm. So the role checks of the MCP tools (the sender policy of `mail_post`, the parent checks of `session_launch` and `role_settings_write`, the `allow` check of `role_settings_write` (only bigm, only for a clanker key), `repos_set`, `learn_refresh`, and `ledger_edit` only for bigm) and the merge gate are speed bumps, like the deny rules. They stop a mistake or a confused agent, not an agent that tries to get past them. `learn_scan` refuses a caller that has a role key, so only the init skill in a session of the owner calls it. Like the other role checks, this is a speed bump: a session can clear the variable.
 - **`learn_scan` runs `ssh -G`.** For an SSH host alias of a remote URL, `learn_scan` runs `ssh -G -- <alias>`. This command reads the SSH configuration of the owner and makes no connection. But it can run the `Match exec` commands of that configuration. The alias comes from the git configuration of a repository, so the scan accepts only the characters `A-Z`, `a-z`, `0-9`, `.`, and `-`. The scan runs no command of a repository and reads no file of the working tree. It reads only the folder tree and the `.git` folders.
 - **`ledger_edit` runs `git` in the ledger folder.** The MCP server runs `git status`, `git add`, `git commit`, `git log`, `git rev-parse`, and `git reset` only in the ledger folder of `init/config.json`: for one `*.md` file inside it, or for the action `commit`, for the listed changed files inside it, not under `.git/`. It never pushes. The commit message goes on the standard input, not on the command line.
-- **The learner reads files only.** The learner subagent (`bruh:learner`) has only the tools Read, Grep, and Glob. It runs no command of a repository.
+- **The learner reads files only.** The learner subagent (`coordinator:learner`) has only the tools Read, Grep, and Glob. It runs no command of a repository.
 
 ## What bruh writes, and where
 

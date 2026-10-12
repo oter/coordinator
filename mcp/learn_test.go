@@ -306,8 +306,8 @@ func TestLedgerPath(t *testing.T) {
 		wantErr string // "" means no error
 	}{
 		{name: "no file", wantErr: errNoLedger.Error()},
-		{name: "null", config: []byte("null"), wantErr: "<data>/init/config.json has no ledger_path; run /bruh:init"},
-		{name: "empty ledger_path", config: []byte(`{"ledger_path": ""}`), wantErr: "<data>/init/config.json has no ledger_path; run /bruh:init"},
+		{name: "null", config: []byte("null"), wantErr: "<data>/init/config.json has no ledger_path; run /coordinator:init"},
+		{name: "empty ledger_path", config: []byte(`{"ledger_path": ""}`), wantErr: "<data>/init/config.json has no ledger_path; run /coordinator:init"},
 		{name: "not JSON", config: []byte("not json"), wantErr: "<data>/init/config.json: invalid character 'o' in literal null (expecting 'u')"},
 		{name: "ledger_path set", config: good, want: ledger},
 	}

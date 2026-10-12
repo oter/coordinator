@@ -5,11 +5,11 @@ updates:
     schedule:
       interval: weekly
   - package-ecosystem: gomod
-    directory: /plugins/bruh/mcp
+    directory: /mcp
     schedule:
       interval: weekly
   - package-ecosystem: gomod
-    directory: /plugins/bruh/channels/slack
+    directory: /channels/slack
     schedule:
       interval: weekly
   - package-ecosystem: npm

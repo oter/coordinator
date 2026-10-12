@@ -163,10 +163,10 @@ count_all() {
 	cat "$1"/*.json "$1"/read/*.json 2>/dev/null | jq -s 'length'
 }
 
-# data_dir prints the plugin data folder of bruh when Claude Code loads it with
-# --plugin-dir (plugin id bruh@inline).
+# data_dir prints the plugin data folder of the coordinator when Claude Code loads it with
+# --plugin-dir (plugin id coordinator@inline).
 data_dir() {
-	printf '%s\n' "${BRUH_TEST_DATA:-${CLAUDE_CODE_PLUGIN_CACHE_DIR:-$HOME/.claude/plugins}/data/bruh-inline}"
+	printf '%s\n' "${BRUH_TEST_DATA:-${CLAUDE_CODE_PLUGIN_CACHE_DIR:-$HOME/.claude/plugins}/data/coordinator-inline}"
 }
 
 # mcp_call sends one tools/call request to the MCP server binary $BRUH_TEST_MCP

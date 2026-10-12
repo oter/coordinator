@@ -23,7 +23,7 @@ import (
 )
 
 // pluginID is the ID of the marketplace install (spec 18): the key of pluginConfigs.
-const pluginID = "bruh@oter"
+const pluginID = "coordinator@oter"
 
 var (
 	repoRE = regexp.MustCompile(`^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$`)
@@ -301,13 +301,14 @@ func unwrapTap(prev, tap string) string {
 	return prev
 }
 
-// isDataTap reports whether path is the tap of a bruh data folder, <plugins root>/data/bruh-<id>/bin/statusline-tap.sh:
-// a sibling of the data folder of tap (also under CLAUDE_CODE_PLUGIN_CACHE_DIR), or a folder
-// under a .../plugins/data/ folder.
+// isDataTap reports whether path is the tap of a coordinator data folder,
+// <plugins root>/data/coordinator-<id>/bin/statusline-tap.sh, or of a data folder bruh-<id> of the
+// bruh plugin before the split: a sibling of the data folder of tap (also under
+// CLAUDE_CODE_PLUGIN_CACHE_DIR), or a folder under a .../plugins/data/ folder.
 func isDataTap(path, tap string) bool {
 	dir, ok := strings.CutSuffix(path, "/bin/statusline-tap.sh")
 	parent, seg := filepath.Split(dir)
-	if !ok || !strings.HasPrefix(seg, "bruh-") {
+	if !ok || !(strings.HasPrefix(seg, "coordinator-") || strings.HasPrefix(seg, "bruh-")) {
 		return false
 	}
 	return filepath.Clean(parent) == filepath.Dir(filepath.Dir(filepath.Dir(tap))) || strings.HasSuffix(parent, "/plugins/data/")
@@ -319,17 +320,17 @@ var workflowAllowRules = []string{
 	"Workflow(bruh:review-and-fix)", "Workflow(bruh:review-only)",
 }
 
-// mcpAllowRules lists the allow rules of the bruh MCP tools. init_apply is left out, so an
+// mcpAllowRules lists the allow rules of the coordinator MCP tools. init_apply is left out, so an
 // agent cannot write user settings without the user.
 func mcpAllowRules(slack bool) []string {
 	var rules []string
 	for _, t := range AllTools() {
 		if t.Name != "init_apply" {
-			rules = append(rules, "mcp__plugin_bruh_bruh__"+t.Name)
+			rules = append(rules, bruhTool+t.Name)
 		}
 	}
 	if slack {
-		rules = append(rules, "mcp__plugin_bruh_slack__post_question", "mcp__plugin_bruh_slack__reply")
+		rules = append(rules, "mcp__plugin_coordinator_slack__post_question", "mcp__plugin_coordinator_slack__reply")
 	}
 	return rules
 }
@@ -394,17 +395,18 @@ func planSettings(old []byte, a InitAnswers, tap string) ([]byte, error) {
 var bigmDenyRules = []string{"Agent(claude-code-guide)", "Agent(general-purpose)", "Agent(Explore)", "Agent(Plan)", "WebFetch", "WebSearch"}
 
 // bigmSkillHook is the PreToolUse command of the bigm start settings (task 27, task 34). It passes
-// bruh:* and each global skill of the owner: a name with no "/" and no leading "." whose
+// bruh:*, coordinator:*, and each global skill of the owner: a name with no "/" and no leading "." whose
 // $HOME/.claude/skills/<name>/SKILL.md exists, read at run time (bruh never sets CLAUDE_CONFIG_DIR).
 // It blocks every other skill: bigm sends an ask that needs one to a clanker. No permission rule
 // can do it, because a deny rule wins over each allow rule and a Skill rule has no negation. Exit 2
 // blocks the call; without jq or without a skill field, the hook blocks too.
-const bigmSkillHook = `s=$(jq -r '.tool_input.skill // ""') || s=; case $s in bruh:*) exit 0;; ''|.*|*/*) ;; *) [ -f "$HOME/.claude/skills/$s/SKILL.md" ] && exit 0;; esac; echo 'bigm runs only bruh skills and the global skills of the owner: send the ask to a clanker' >&2; exit 2`
+const bigmSkillHook = `s=$(jq -r '.tool_input.skill // ""') || s=; case $s in bruh:*|coordinator:*) exit 0;; ''|.*|*/*) ;; *) [ -f "$HOME/.claude/skills/$s/SKILL.md" ] && exit 0;; esac; echo 'bigm runs only bruh and coordinator skills and the global skills of the owner: send the ask to a clanker' >&2; exit 2`
 
 // oldBigmSkillHooks are the earlier commands of bigmSkillHook, an exact-value list. Init replaces
 // a hook group of one of them with the group of bigmSkillHook.
 var oldBigmSkillHooks = []string{
 	`jq -e '.tool_input.skill | startswith("bruh:")' >/dev/null || { echo 'bigm runs no skill: send the ask to a clanker' >&2; exit 2; }`,
+	`s=$(jq -r '.tool_input.skill // ""') || s=; case $s in bruh:*) exit 0;; ''|.*|*/*) ;; *) [ -f "$HOME/.claude/skills/$s/SKILL.md" ] && exit 0;; esac; echo 'bigm runs only bruh skills and the global skills of the owner: send the ask to a clanker' >&2; exit 2`,
 }
 
 // bigmWriteHook is the PreToolUse command of the bigm start settings for owner rule R-19 (task 51):
@@ -443,7 +445,7 @@ func bigmHookGroup(matcher, cmd string) *object {
 
 // planLedgerSettings returns the start settings of bigm in the ledger folder. It starts from the
 // existing file (an empty file is {}), or from the bigm role settings when there is no file. It sets
-// agent to bruh:bigm and each env key of the role settings, so it replaces the old values of these
+// agent to coordinator:bigm and each env key of the role settings, so it replaces the old values of these
 // keys. It adds each deny rule of the role settings that the file does not have yet, and the Skill
 // hook group and the write hook group (bigmHookGroup) to hooks.PreToolUse when the file does not have
 // them yet, after it removes each group that equals the group of an old command (oldBigmSkillHooks),
@@ -483,7 +485,7 @@ func planLedgerSettings(exists bool, old, role []byte) ([]byte, error) {
 	if _, has := perms.vals["deny"]; has && !ok {
 		return nil, errors.New("ledger settings file: permissions.deny is not a JSON array")
 	}
-	top.set("agent", "bruh:bigm")
+	top.set("agent", "coordinator:bigm")
 	env, defEnv := top.child("env"), def.child("env")
 	for _, k := range defEnv.keys {
 		env.set(k, defEnv.vals[k])
@@ -843,7 +845,7 @@ func splitDiff(files []plannedFile, ledger string) (outside, inLedger string, er
 }
 
 func launchCommand(a InitAnswers) string {
-	cmd := "cd " + shq(a.LedgerPath) + " && claude --agent bruh:bigm --name bigm --permission-mode auto"
+	cmd := "cd " + shq(a.LedgerPath) + " && claude --agent coordinator:bigm --name bigm --permission-mode auto"
 	if slices.Contains(a.Channels, "telegram") {
 		cmd += " --channels plugin:telegram@claude-plugins-official"
 	}
@@ -1048,7 +1050,7 @@ func initTools() []Tool {
 	return []Tool{
 		{
 			Name:        "init_plan",
-			Description: "Plan /bruh:init: compute the diff of every file init would write or delete (user settings, the status line tap, the ledger layout, the start settings of bigm in <ledger>/.claude/settings.json, the index files learn/tree.json and learn/projects/<key>.json, and the project files projects/<key>.md). Writes only the plan. The result splits the diff: outside_diff has the files outside the ledger plus <ledger>/.claude/settings.json, ledger_diff has all other ledger files, and diff is outside_diff + ledger_diff with its diff_sha256. Show outside_diff in full and ledger_table as a table; show ledger_diff in full on \"show all\". kept lists the project file of each removed project that has a data row; init does not delete these files. Wait for an explicit yes before init_apply.",
+			Description: "Plan /coordinator:init: compute the diff of every file init would write or delete (user settings, the status line tap, the ledger layout, the start settings of bigm in <ledger>/.claude/settings.json, the index files learn/tree.json and learn/projects/<key>.json, and the project files projects/<key>.md). Writes only the plan. The result splits the diff: outside_diff has the files outside the ledger plus <ledger>/.claude/settings.json, ledger_diff has all other ledger files, and diff is outside_diff + ledger_diff with its diff_sha256. Show outside_diff in full and ledger_table as a table; show ledger_diff in full on \"show all\". kept lists the project file of each removed project that has a data row; init does not delete these files. Wait for an explicit yes before init_apply.",
 			InputSchema: objectSchema(map[string]any{"answers": objectSchema(map[string]any{
 				"ledger_path": str, "mode": map[string]any{"type": "string", "enum": []string{"human", "autonomous"}},
 				"p1_batch_minutes": num, "p1_batch_size": num, "review_round_cap": num, "auto_compact_window": num,

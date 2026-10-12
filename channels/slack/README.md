@@ -2,7 +2,7 @@
 
 This folder is a Claude Code channel: a stdio MCP server that connects the bigm session to one Slack channel. bigm posts each P0 and P1 question as one Slack message. The owner answers in the thread of that message. The answer comes into the bigm session with the question ID.
 
-The server is part of the bruh plugin. Claude Code starts it in every session that loads the plugin, with `go run`. It sends and reads Slack messages only when all of these are true. In every other session it does nothing.
+The server is part of the coordinator plugin. Claude Code starts it in every session that loads the plugin, with `go run`. It sends and reads Slack messages only when all of these are true. In every other session it does nothing.
 
 - `BRUH_ROLE_KEY` is `bigm`.
 - The options `slack_bot_token`, `slack_channel_id`, and `slack_owner_user_id` of the plugin are set.
@@ -14,18 +14,18 @@ The server is part of the bruh plugin. Claude Code starts it in every session th
 3. Install the app in the workspace. Copy the bot token (`xoxb-...`).
 4. Create a channel for bruh and invite the app to it. Copy the channel ID.
 5. Copy your own Slack member ID from your Slack profile.
-6. In Claude Code, run `/plugin configure bruh` and set the three Slack options. The token is sensitive, so Claude Code keeps it in the secure credential store.
+6. In Claude Code, run `/plugin configure coordinator` and set the three Slack options. The token is sensitive, so Claude Code keeps it in the secure credential store.
 
 ## Start bigm with the channel
 
 During the channels research preview, a channel that is not on the Anthropic allowlist loads only with the development flag. Start bigm in the ledger folder with the full command:
 
 ```bash
-claude --agent bruh:bigm --name bigm --permission-mode auto \
-  --dangerously-load-development-channels plugin:bruh@oter
+claude --agent coordinator:bigm --name bigm --permission-mode auto \
+  --dangerously-load-development-channels plugin:coordinator@oter
 ```
 
-The ledger settings file `.claude/settings.json`, which `/bruh:init` writes, holds the role key `bigm` and the other start settings. If you installed bruh before this file existed, run `/bruh:init` again to write it.
+The ledger settings file `.claude/settings.json`, which `/coordinator:init` writes, holds the role key `bigm` and the other start settings. If you installed bruh before this file existed, run `/coordinator:init` again to write it.
 
 With Slack set up, start bigm only with the full command. A plain `claude` in the ledger folder also starts bigm, and this server then polls Slack and moves its state forward, because `BRUH_ROLE_KEY` is `bigm`. But Claude Code delivers the channel notifications only to a session that loaded the channel, so the plain session drops the answers of the owner.
 

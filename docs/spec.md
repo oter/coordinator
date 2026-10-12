@@ -2,7 +2,7 @@
 
 Status: version 0.6, for the build (2026-10-03). The owner approved version 0.5 on 2026-09-30. On 2026-10-03, the owner accepted all earlier agent-derived items of version 0.6 and made twelve decisions (design.md, L38 to L49). Section 25 lists the changes from version 0.5, and section 24 the changes from version 0.4.
 
-This specification is the input for the implementation plan. The decision log is in [design.md](design.md). The verified facts and the field lessons are in [knowledge.md](knowledge.md). The process is shown as diagrams in [flow.md](flow.md). Each decision in this file has one tag:
+This specification is the input for the implementation plan. The decision log is in [design.md](https://github.com/oter/bruh/blob/main/docs/design.md). The verified facts and the field lessons are in [knowledge.md](https://github.com/oter/bruh/blob/main/docs/knowledge.md). The process is shown as diagrams in [flow.md](flow.md). Each decision in this file has one tag:
 
 - "Owner decision <date>": the owner made the decision.
 - "Owner decision <date> (delegated ruling)": the owner gave the decision to a subagent, and the subagent made it.

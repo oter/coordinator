@@ -176,10 +176,10 @@ func TestCLIEnvDefaultDataDir(t *testing.T) {
 	t.Setenv("HOME", home)
 	t.Setenv("BRUH_DATA", "")
 	t.Setenv("BRUH_PLUGIN_ROOT", home)
-	if pluginID != "bruh@oter" {
-		t.Fatalf("pluginID = %q, want bruh@oter", pluginID)
+	if pluginID != "coordinator@oter" {
+		t.Fatalf("pluginID = %q, want coordinator@oter", pluginID)
 	}
-	if got, want := cliEnv().DataDir, filepath.Join(home, ".claude", "plugins", "data", "bruh-oter"); got != want {
+	if got, want := cliEnv().DataDir, filepath.Join(home, ".claude", "plugins", "data", "coordinator-oter"); got != want {
 		t.Errorf("DataDir = %q, want %q", got, want)
 	}
 }

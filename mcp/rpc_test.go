@@ -19,7 +19,7 @@ func startRPC(t *testing.T, env Env, tools []Tool) *rpcClient {
 	t.Helper()
 	inR, inW := io.Pipe()
 	outR, outW := io.Pipe()
-	srv := NewServer("bruh", "test", tools)
+	srv := NewServer("coordinator", "test", tools)
 	go func() { _ = srv.Serve(env, inR, outW); outW.Close() }()
 	t.Cleanup(func() { inW.Close() })
 	return &rpcClient{in: inW, out: bufio.NewScanner(outR)}
@@ -49,7 +49,7 @@ func TestInitializeAndList(t *testing.T) {
 	c.send(t, `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}`)
 	init := c.next(t)
 	info := init["result"].(map[string]any)["serverInfo"].(map[string]any)
-	if info["name"] != "bruh" {
+	if info["name"] != "coordinator" {
 		t.Fatalf("init = %v", init)
 	}
 	c.send(t, `{"jsonrpc":"2.0","id":2,"method":"tools/list"}`)

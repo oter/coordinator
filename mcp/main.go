@@ -20,10 +20,10 @@ import (
 
 const usage = `usage: go run -C <plugin root>/mcp . [command]
 
-With no command, the program is the bruh MCP server (stdio).
+With no command, the program is the coordinator MCP server (stdio).
 
 Commands:
-  init --answers <file>    non-interactive /bruh:init; BRUH_INIT_<KEY> variables override the file
+  init --answers <file>    non-interactive /coordinator:init; BRUH_INIT_<KEY> variables override the file
   role-settings <role key> write <data>/roles/<role key>.json with the defaults (never overwrites)
   watch [--data <dir>] [--once]
                            poll the code hosts of <data>/repos.json; one JSON line for each event
@@ -31,7 +31,7 @@ Commands:
 
 func main() {
 	if len(os.Args) < 2 {
-		srv := NewServer("bruh", "0.12.2", AllTools())
+		srv := NewServer("coordinator", "0.13.0", AllTools())
 		if err := srv.Serve(EnvFromOS(), os.Stdin, os.Stdout); err != nil {
 			log.Fatal(err)
 		}

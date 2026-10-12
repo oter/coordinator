@@ -51,7 +51,7 @@ type learnScanOutput struct {
 // activity. It refuses a caller with a role key, and it writes nothing.
 func learnScan(env Env, in learnScanInput) (learnScanOutput, error) {
 	if env.RoleKey != "" {
-		return learnScanOutput{}, fmt.Errorf("learn_scan runs only in the init skill of the owner, in a session with no role key (BRUH_ROLE_KEY is %q); run /bruh:init with claude --setting-sources user in the ledger folder, or from a folder outside the ledger", env.RoleKey)
+		return learnScanOutput{}, fmt.Errorf("learn_scan runs only in the init skill of the owner, in a session with no role key (BRUH_ROLE_KEY is %q); run /coordinator:init with claude --setting-sources user in the ledger folder, or from a folder outside the ledger", env.RoleKey)
 	}
 	in.Root = cmp.Or(in.Root, filepath.Join(env.Home, "workspace"))
 	in.Depth = cmp.Or(in.Depth, 4)

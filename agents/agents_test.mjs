@@ -1,13 +1,14 @@
 // Structural checks for the role agents, the defaults, and the ledger template.
-// Run: node --test plugins/bruh/agents/agents_test.mjs
+// Run: node --test agents/agents_test.mjs
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
 const here = import.meta.dirname
+// The plugin is the root of the repository.
 const plugin = join(here, '..')
-const repo = join(plugin, '..', '..')
+const repo = plugin
 const read = (p) => readFileSync(p, 'utf8')
 
 // Tool names of the MCP server: the Name field of each Tool literal in mcp/*.go (gofmt puts it
@@ -123,7 +124,7 @@ for (const role of ROLES) {
       const t = m[1]
       if (TOOL_FAMILY.test(t) && !NOT_TOOLS.has(t) && !known.has(t)) unknown.push(t)
     }
-    for (const m of agents[role].matchAll(/mcp__plugin_bruh_bruh__([a-z_]+)/g)) {
+    for (const m of agents[role].matchAll(/mcp__plugin_coordinator_coordinator__([a-z_]+)/g)) {
       if (!known.has(m[1])) unknown.push(m[1])
     }
     assert.deepEqual(unknown, [], `unknown tools in agents/${role}.md`)
@@ -196,13 +197,8 @@ test('the ledger template has the layout of spec 8', () => {
 })
 
 // Interfaces section 4a: the start header, the post marker, and the remote role settings command.
+// The interfaces document stays in oter/bruh; the checks of its text moved there.
 test('the agents follow interfaces section 4a', () => {
-  const text = read(join(repo, 'docs/superpowers/plans/2026-09-30-v0.1-interfaces.md'))
-  const section = text.split('## 4a. Messages and posts')[1].split('\n## 5.')[0]
-  const marker = section.match(/`(<!-- bruh:<role key> -->)`/)[1]
-  assert.ok(agents.clerk.includes(marker), 'clerk.md does not use the post marker of the contract')
-  assert.ok(section.includes('`START: <subject>`'))
-  assert.ok(section.includes('. role-settings <role key>'))
   assert.ok(agents.bigm.includes('. role-settings clanker-<project>'), 'bigm.md does not start a remote clanker with the role-settings command')
   for (const role of ROLES) {
     assert.ok(!/DONE: start message/.test(agents[role]), `agents/${role}.md still sends a start message with DONE`)
@@ -310,7 +306,7 @@ test('the clerk passes the test gates to deliver', () => {
 
 // Final review m1, m5, m6: the channel tools, the ledger clerk resume, and the question ID in a Telegram question.
 test('bigm names the Slack tool, asks for the question ID, and resumes the ledger clerk first', () => {
-  assert.ok(agents.bigm.includes('mcp__plugin_bruh_slack__post_question'))
+  assert.ok(agents.bigm.includes('mcp__plugin_coordinator_slack__post_question'))
   assert.ok(agents.bigm.includes('`Answer with Q-<id> first, then the option number or your words.`'))
   const ledger = agents.bigm.split('## The ledger clerk')[1].split('\n## ')[0]
   assert.match(ledger, /resume it with `session_resume`/)
@@ -351,10 +347,6 @@ test('the clerk relaunches the workflow that stopped, and posts only with a clos
   // The review-round cap of the start message (mode.md) reaches the workflow.
   const implement = agents.clerk.split('## Implement and review workflows')[1].split('\n## ')[0]
   assert.match(implement, /For `\/bruh:review-and-fix`, set `round_cap` to the review-round cap of the start message/)
-  // A manual session saves results through the MCP server too (principle 3).
-  const skill = read(join(plugin, 'skills/implement/SKILL.md'))
-  assert.match(skill, /without `BRUH_ROLE_KEY`, it saves under `<data>\/results\/owner\/`/)
-  assert.doesNotMatch(skill, /write the result to a file outside the repository/)
   // The closed post approval of bigm is a row of the closed-form message table below.
   const posts = agents.clerk.split('## Posts')[1].split('\n## ')[0]
   assert.doesNotMatch(posts, /from your clanker or from `bigm`/)
@@ -492,11 +484,11 @@ test('the routing eval driver: dry run and compare rule', async () => {
   assert.equal(dry.status, 0, dry.stderr)
   const cases = readdirSync(join(repo, 'tests/eval/routing'), { withFileTypes: true })
     .filter((d) => d.isDirectory() && d.name !== 'ledger').map((d) => d.name)
-  assert.equal(dry.stdout.split('\n').filter((l) => l.includes('claude -p --agent bruh:bigm')).length, cases.length, 'one bigm command for each case')
+  assert.equal(dry.stdout.split('\n').filter((l) => l.includes('claude -p --agent coordinator:bigm')).length, cases.length, 'one bigm command for each case')
   assert.ok(dry.stdout.includes(`--plugin-dir ${plugin}`), 'the plugin of the checkout')
   assert.ok(dry.stdout.includes('--tools Read,Grep,Glob,AskUserQuestion --strict-mcp-config'), 'only tools that read, no MCP server')
   assert.ok(dry.stdout.includes('env -u BRUH_ROLE_KEY'), 'no role key')
-  assert.ok(!dry.stdout.includes('bruh:learner'), 'no learner')
+  assert.ok(!dry.stdout.includes('coordinator:learner'), 'no learner')
   for (const c of cases) {
     for (const line of read(join(repo, 'tests/eval/routing', c, 'expected.txt')).split('\n').filter(Boolean)) {
       assert.match(line, /^(ROUTE clanker-[a-z0-9-]+ [0-9]+|NOASK)$/, `${c}/expected.txt: closed lines only`)
@@ -526,9 +518,8 @@ test('the routing eval driver: dry run and compare rule', async () => {
 })
 
 // Task 41 part 2 (Q-207): a deny of git-chain.sh is no refusal, so a rule-following agent opens no P0 for it.
-test('house rule 8 and clerk rule 3 exempt the git-chain deny from escalation', () => {
-  const rule = (text, n) => text.split('\n').find((l) => l.startsWith(`${n}. A refusal`))
-  for (const line of [rule(read(join(plugin, 'defaults', 'house-rules.md')), 8), rule(agents.clerk, 3)]) {
-    assert.ok(line.includes('`git-chain.sh`') && line.includes('open no question'), line)
-  }
+// The check of house rule 8 moved to oter/bruh with defaults/house-rules.md.
+test('clerk rule 3 exempts the git-chain deny from escalation', () => {
+  const line = agents.clerk.split('\n').find((l) => l.startsWith('3. A refusal'))
+  assert.ok(line.includes('`git-chain.sh`') && line.includes('open no question'), line)
 })

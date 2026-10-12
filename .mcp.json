@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "bruh": {
+    "coordinator": {
       "command": "go",
       "args": [
         "run",

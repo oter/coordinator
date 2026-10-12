@@ -47,7 +47,7 @@ export function spinner(role, state, tick) {
   return { glyph: frames[step % frames.length] + mark, color: COLORS[state], dim: state === 'idle' }
 }
 
-// Role keys as plugins/bruh/mcp/env.go ParseRoleKey reads them; the board shows clankers and clerks.
+// Role keys as mcp/env.go ParseRoleKey reads them; the board shows clankers and clerks.
 const PROJECT = /^[a-z0-9]+(-[a-z0-9]+)*$/
 export function parseKey(key) {
   if (key.startsWith('clanker-')) {
@@ -201,7 +201,7 @@ async function openQuestions($, data) {
   return open.sort((a, b) => a.priority.localeCompare(b.priority) || String(a.opened_at).localeCompare(String(b.opened_at)))
 }
 
-// A role's report (plugins/bruh/mcp/report.go: <data>/reports/<role key>.jsonl,
+// A role's report (mcp/report.go: <data>/reports/<role key>.jsonl,
 // one JSON object per line): the text of its last status or result line, else
 // of its last line, and its phase.
 async function readReport($, data, key) {
@@ -217,7 +217,7 @@ async function refresh($) {
   if (isRefreshing) return
   isRefreshing = true
   try {
-    const data = (await $.env.get('BRUH_DATA')) || `${await $.env.get('HOME')}/.claude/plugins/data/bruh-oter`
+    const data = (await $.env.get('BRUH_DATA')) || `${await $.env.get('HOME')}/.claude/plugins/data/coordinator-oter`
     dataDir = data
     const notes = []
     let sessions = []
@@ -322,7 +322,7 @@ export const register = (on, options) => {
   })
 
   // The person's /config pick of the design: the open pane draws it at once.
-  on('config.set', { key: 'bruh.board_design' }, async ($, e, next) => {
+  on('config.set', { key: 'coordinator.board_design' }, async ($, e, next) => {
     const result = await next(e)
     if (result.value !== undefined) {
       design = result.value

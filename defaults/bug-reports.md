@@ -1,6 +1,6 @@
 # Bug reports of bruh
 
-Follow these steps when you talk to the owner and you find a defect of bruh itself, or you get a notice `DONE: bruh defect: <subject>`. The sessions that talk to the owner are bigm and the session of a bruh skill that the owner runs (`/bruh:init`, or `/bruh:implement` in a manual session). A clanker or a clerk sends a notice to its parent, as its agent text says, and files nothing.
+Follow these steps when you talk to the owner and you find a defect of bruh itself, or you get a notice `DONE: bruh defect: <subject>`. The sessions that talk to the owner are bigm and the session of a bruh skill that the owner runs (`/coordinator:init`, or `/bruh:implement` in a manual session). A clanker or a clerk sends a notice to its parent, as its agent text says, and files nothing.
 
 ## What counts
 

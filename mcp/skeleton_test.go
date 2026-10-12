@@ -22,28 +22,20 @@ func readJSON(t *testing.T, rel string, v any) {
 	}
 }
 
-func TestMarketplaceListsBruh(t *testing.T) {
-	var m struct {
-		Name    string `json:"name"`
-		Plugins []struct {
-			Name   string `json:"name"`
-			Source string `json:"source"`
-		} `json:"plugins"`
-	}
-	readJSON(t, "../../../.claude-plugin/marketplace.json", &m)
-	if m.Name != "oter" || len(m.Plugins) != 1 || m.Plugins[0].Name != "bruh" || m.Plugins[0].Source != "./plugins/bruh" {
-		t.Fatalf("marketplace = %+v", m)
-	}
-}
-
+// The marketplace oter lives in oter/bruh and lists this plugin; this repository has no marketplace.json.
 func TestPluginManifest(t *testing.T) {
 	var p struct {
-		Name    string `json:"name"`
-		License string `json:"license"`
+		Name       string `json:"name"`
+		Version    string `json:"version"`
+		License    string `json:"license"`
+		Repository string `json:"repository"`
 	}
 	readJSON(t, "../.claude-plugin/plugin.json", &p)
-	if p.Name != "bruh" || p.License != "Apache-2.0" {
+	if p.Name != "coordinator" || p.Version != "0.13.0" || p.License != "Apache-2.0" || p.Repository != "https://github.com/oter/coordinator" {
 		t.Fatalf("plugin = %+v", p)
+	}
+	if _, err := os.Stat("../.claude-plugin/marketplace.json"); err == nil {
+		t.Fatal("marketplace.json exists; the marketplace oter lives in oter/bruh")
 	}
 }
 
@@ -54,8 +46,8 @@ func TestVersionsMatch(t *testing.T) {
 	readJSON(t, "../.claude-plugin/plugin.json", &p)
 	versions := []string{p.Version}
 	for file, pattern := range map[string]string{
-		"main.go":                     `NewServer\("bruh", "([^"]+)"`,
-		"../channels/slack/server.go": `"bruh-slack", "version": "([^"]+)"`,
+		"main.go":                     `NewServer\("coordinator", "([^"]+)"`,
+		"../channels/slack/server.go": `"coordinator-slack", "version": "([^"]+)"`,
 	} {
 		data, err := os.ReadFile(filepath.FromSlash(file))
 		if err != nil {
@@ -82,9 +74,9 @@ func TestMCPConfig(t *testing.T) {
 		} `json:"mcpServers"`
 	}
 	readJSON(t, "../.mcp.json", &c)
-	s, ok := c.MCPServers["bruh"]
+	s, ok := c.MCPServers["coordinator"]
 	if !ok {
-		t.Fatal("no bruh server")
+		t.Fatal("no coordinator server")
 	}
 	if s.Command != "go" || !slices.Equal(s.Args, []string{"run", "-C", "${CLAUDE_PLUGIN_ROOT}/mcp", "."}) {
 		t.Fatalf("server = %+v", s)
@@ -118,8 +110,8 @@ func TestUserConfig(t *testing.T) {
 		t.Errorf("userConfig keys = %v, want %v", keys, wantKeys)
 	}
 	for k, o := range p.UserConfig {
-		if title, _ := o["title"].(string); !strings.HasPrefix(title, "bruh: ") {
-			t.Errorf("userConfig[%q].title = %q, want prefix %q", k, title, "bruh: ")
+		if title, _ := o["title"].(string); !strings.HasPrefix(title, "coordinator: ") {
+			t.Errorf("userConfig[%q].title = %q, want prefix %q", k, title, "coordinator: ")
 		}
 	}
 }
@@ -134,7 +126,7 @@ func TestInitSkill(t *testing.T) {
 		t.Fatal("bad frontmatter")
 	}
 	for _, w := range []string{
-		"bruh_info", "learn_scan", "bruh:learner", "PURPOSE:", "LINK ", "DOC:", "HOST ", "at most 8",
+		"bruh_info", "learn_scan", "coordinator:learner", "PURPOSE:", "LINK ", "DOC:", "HOST ", "at most 8",
 		"init_plan", "init_apply", "AskUserQuestion", "(current)", "change projects", "change settings",
 		"learn again", "split", "join", "accept all", "one by one", "show all", "ledger_table", "outside_diff",
 		"fills", "host_aliases", "now", "at the first work", "/exit", "--answers", "BRUH_INIT_", "--setting-sources user",
